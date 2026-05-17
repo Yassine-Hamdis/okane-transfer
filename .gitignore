@@ -1,0 +1,111 @@
+# ============================================================================
+# BACKEND (Java/Maven)
+# ============================================================================
+
+# Compiled Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+
+# Maven
+.m2/
+*.iml
+
+# IDE (Backend)
+.idea/
+.eclipse/
+.settings/
+.project
+.classpath
+*.vscode/
+*.swp
+*.swo
+*~
+
+# Secrets - NEVER commit these
+backend/src/main/resources/application.properties
+backend/src/main/resources/application-dev.properties
+backend/src/main/resources/application-prod.properties
+
+# Example files (safe to commit, show template)
+!backend/src/main/resources/application.example.properties
+
+# Logs
+*.log
+logs/
+backend/logs/
+
+# ============================================================================
+# FRONTEND (Angular/Node)
+# ============================================================================
+
+# Node modules (HUGE - never commit)
+frontend/node_modules/
+frontend/package-lock.json
+frontend/yarn.lock
+
+# Angular build outputs
+frontend/dist/
+frontend/.angular/
+frontend/out-tsc/
+
+# IDE (Frontend)
+frontend/.vscode/
+frontend/.idea/
+
+# Angular dependencies
+frontend/.npm
+frontend/.eslintcache
+
+# Environment files (secrets)
+frontend/src/environments/environment.prod.ts
+frontend/src/environments/environment.ts
+
+# Logs
+frontend/npm-debug.log
+frontend/yarn-error.log
+
+# ============================================================================
+# OS SPECIFIC
+# ============================================================================
+
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ============================================================================
+# IDE GENERAL (both projects)
+# ============================================================================
+
+*.sublime-project
+*.sublime-workspace
+*.atom
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# ============================================================================
+# MISC
+# ============================================================================
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# System files
+.env
+.env.local
+
+# Docker (optional, if you use Docker)
+docker-compose.override.yml
