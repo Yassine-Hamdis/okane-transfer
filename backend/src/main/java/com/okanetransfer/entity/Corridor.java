@@ -7,8 +7,10 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "corridors")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Corridor {
 
@@ -16,30 +18,40 @@ public class Corridor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // e.g. "MA" for Morocco
-    @Column(name = "source_country", nullable = false, length = 3)
-    private String sourceCountry;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_country_id", nullable = false)
+    private Country sourceCountry;
 
-    // e.g. "SN" for Senegal
-    @Column(name = "destination_country", nullable = false, length = 3)
-    private String destinationCountry;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "destination_country_id", nullable = false)
+    private Country destinationCountry;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "source_currency_id", nullable = false)
     private Currency sourceCurrency;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destination_currency_id", nullable = false)
     private Currency destinationCurrency;
 
-    @Column(nullable = false)
+    @Column(name = "active", nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 }

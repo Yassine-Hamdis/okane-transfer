@@ -1,14 +1,18 @@
 package com.okanetransfer.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "audit_logs")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class AuditLog {
 
@@ -16,27 +20,29 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Who did the action
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    // NULL for anonymous actions (e.g. LOGIN_FAILED before auth)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
-    // What action was performed
-    @Column(nullable = false)
-    private String action;       // e.g. "TRANSFER_CREATED", "USER_DELETED"
+    @NotBlank
+    @Size(max = 100)
+    @Column(name = "action", nullable = false, length = 100)
+    private String action;
 
-    // Which entity was affected
-    @Column(name = "entity_type")
-    private String entityType;   // e.g. "Transfer", "User"
+    @Size(max = 50)
+    @Column(name = "entity_type", length = 50)
+    private String entityType;
 
     @Column(name = "entity_id")
     private Long entityId;
 
-    // Extra details (JSON string)
-    @Column(columnDefinition = "TEXT")
+    // JSON string for extra context
+    @Column(name = "details", columnDefinition = "TEXT")
     private String details;
 
-    @Column(name = "ip_address")
+    @Size(max = 45)
+    @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -44,6 +50,6 @@ public class AuditLog {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 }

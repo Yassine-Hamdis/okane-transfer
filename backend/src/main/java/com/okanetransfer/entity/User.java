@@ -1,101 +1,95 @@
 package com.okanetransfer.entity;
 
-import com.okanetransfer.enums.Role;
+import com.okanetransfer.entity.enums.Role;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.springframework.security.core.*;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.*;
 
 @Entity
 @Table(name = "users")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class User implements UserDetails {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlank
-    @Column(nullable = false)
+    @Size(max = 100)
+    @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
     @NotBlank
-    @Column(nullable = false)
+    @Size(max = 100)
+    @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
+    @NotBlank
     @Email
-    @Column(nullable = false, unique = true)
+    @Size(max = 255)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @NotBlank
+    @Column(name = "password", nullable = false)
     private String password;
 
     @NotBlank
-    @Column(nullable = false)
+    @Size(max = 20)
+    @Column(name = "phone", nullable = false, length = 20)
     private String phone;
 
-    // Stored encrypted (AES-256)
-    @Column(name = "id_number_encrypted")
+    // AES-256 encrypted — NULL for ROLE_ADMIN
+    @Size(max = 500)
+    @Column(name = "id_number_encrypted", length = 500)
     private String idNumberEncrypted;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
-    @Column(nullable = false)
+    @Column(name = "active", nullable = false)
+    @Builder.Default
     private boolean active = true;
 
-    @Column(nullable = false)
+    @Column(name = "two_factor_enabled", nullable = false)
+    @Builder.Default
     private boolean twoFactorEnabled = false;
+
+    // NULL for ROLE_ADMIN and ROLE_CLIENT
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agency_id", nullable = true)
+    private Agency agency;
+
+    // NULL for first admin (created manually/seeded)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = true)
+    private User createdBy;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    // Which agency this user belongs to (null for admin/client)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "agency_id")
-    private Agency agency;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
-
-    // ===== Spring Security methods =====
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
-    }
-
-    @Override
-    public String getUsername() { return email; }
-
-    @Override
-    public boolean isAccountNonExpired() { return true; }
-
-    @Override
-    public boolean isAccountNonLocked() { return active; }
-
-    @Override
-    public boolean isCredentialsNonExpired() { return true; }
-
-    @Override
-    public boolean isEnabled() { return active; }
 }

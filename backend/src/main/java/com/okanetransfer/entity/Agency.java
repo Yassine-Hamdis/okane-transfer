@@ -1,17 +1,20 @@
 package com.okanetransfer.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "agencies")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Agency {
 
@@ -20,40 +23,42 @@ public class Agency {
     private Long id;
 
     @NotBlank
-    @Column(nullable = false)
+    @Size(max = 100)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
     @NotBlank
-    @Column(nullable = false)
+    @Size(max = 255)
+    @Column(name = "address", nullable = false)
     private String address;
 
     @NotBlank
-    @Column(nullable = false)
+    @Size(max = 100)
+    @Column(name = "city", nullable = false, length = 100)
     private String city;
 
-    @NotBlank
-    @Column(nullable = false)
-    private String country;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "country_id", nullable = false)
+    private Country country;
 
+    // Nullable at creation — assigned later by admin
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id", nullable = true)
+    private User manager;
+
+    @NotNull
     @Column(name = "daily_limit", nullable = false, precision = 15, scale = 2)
     private BigDecimal dailyLimit;
 
-    @Column(nullable = false)
+    @Column(name = "active", nullable = false)
+    @Builder.Default
     private boolean active = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // All users (agents, managers) of this agency
-    @OneToMany(mappedBy = "agency", fetch = FetchType.LAZY)
-    private List<User> users;
-
-    // Cash register of this agency
-    @OneToOne(mappedBy = "agency", cascade = CascadeType.ALL)
-    private CashRegister cashRegister;
-
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 }

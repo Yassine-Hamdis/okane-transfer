@@ -6,32 +6,35 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Entity
-@Table(name = "currencies")
+@Table(name = "countries")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Currency {
+public class Country {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlank
+    @Size(max = 100)
+    @Column(name = "name", nullable = false, unique = true, length = 100)
+    private String name;
+
+    @NotBlank
     @Size(max = 3)
     @Column(name = "code", nullable = false, unique = true, length = 3)
     private String code;
 
-    @NotBlank
-    @Size(max = 100)
-    @Column(name = "name", nullable = false, length = 100)
-    private String name;
+    @Column(name = "allows_sending", nullable = false)
+    @Builder.Default
+    private boolean allowsSending = true;
 
-    @NotBlank
-    @Size(max = 5)
-    @Column(name = "symbol", nullable = false, length = 5)
-    private String symbol;
+    @Column(name = "allows_receiving", nullable = false)
+    @Builder.Default
+    private boolean allowsReceiving = true;
 
     @Column(name = "active", nullable = false)
     @Builder.Default
