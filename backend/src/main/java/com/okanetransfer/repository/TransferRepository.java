@@ -23,4 +23,6 @@ public interface TransferRepository extends JpaRepository<Transfer, Long> {
     Optional<Transfer> findByWithdrawalCodeAndStatus(
             String withdrawalCode, TransferStatus status);
     List<Transfer> findAllByRecipientPhone(String recipientPhone);
+    // Add this method — WithdrawalCodeGenerator needs it
+    boolean existsByWithdrawalCode(String withdrawalCode);
 }
