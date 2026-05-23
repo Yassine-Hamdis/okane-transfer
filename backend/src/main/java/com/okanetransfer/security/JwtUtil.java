@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
-@PropertySource("classpath:application.properties")
+@PropertySource("classpath:application.example.properties")
 public class JwtUtil {
 
     @Value("${jwt.secret}")

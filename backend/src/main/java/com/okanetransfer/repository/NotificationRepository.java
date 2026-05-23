@@ -10,8 +10,8 @@ import java.util.List;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     List<Notification> findAllByUserId(Long userId);
-    List<Notification> findAllByUserIdAndReadFalse(Long userId);
+    List<Notification> findAllByUserIdAndIsReadFalse(Long userId);
     List<Notification> findAllByTransferId(Long transferId);
     List<Notification> findAllByChannel(NotificationChannel channel);
-    long countByUserIdAndReadFalse(Long userId);
+    long countByUserIdAndIsReadFalse(Long userId);
 }

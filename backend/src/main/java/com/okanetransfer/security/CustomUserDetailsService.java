@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserRepository userRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
@@ -26,11 +28,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (!user.isActive()) {
             throw new UsernameNotFoundException("User account is disabled: " + email);
         }
+        if (user.getAgency() != null) {
+            user.getAgency().getId();
+        }
 
-        return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
-                user.getPassword(),
-                List.of(new SimpleGrantedAuthority(user.getRole().name()))
-        );
+        return new CustomUserDetails(user);
     }
 }

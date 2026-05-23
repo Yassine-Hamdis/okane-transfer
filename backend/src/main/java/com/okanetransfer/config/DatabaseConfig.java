@@ -19,7 +19,7 @@ import java.util.Properties;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(basePackages = "com.okanetransfer.repository")
-@PropertySource("classpath:application.properties")
+@PropertySource("classpath:application.example.properties")
 public class DatabaseConfig {
 
     @Value("${db.url}")

@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**","/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         // Admin only
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // Manager + Admin
@@ -50,4 +50,5 @@ public class SecurityConfig {
             AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+
 }
