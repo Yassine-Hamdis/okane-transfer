@@ -6,6 +6,8 @@ import com.okanetransfer.entity.Transfer;
 import com.okanetransfer.entity.User;
 import com.okanetransfer.entity.enums.NotificationChannel;
 import com.okanetransfer.exception.ResourceNotFoundException;
+import com.okanetransfer.infrastructure.brevo.BrevoEmailSender;
+import com.okanetransfer.infrastructure.brevo.BrevoSmsSender;
 import com.okanetransfer.repository.NotificationRepository;
 import com.okanetransfer.repository.TransferRepository;
 import com.okanetransfer.repository.UserRepository;
@@ -32,6 +34,12 @@ public class NotificationService {
 
     @Autowired
     private TransferRepository transferRepository;
+
+    @Autowired
+    private BrevoEmailSender brevoEmailSender;
+
+    @Autowired
+    private BrevoSmsSender brevoSmsSender;
 
     // ─────────────────────────────────────────────────────
     //  SEND METHODS — called by other services
@@ -75,8 +83,20 @@ public class NotificationService {
 
             notificationRepository.save(notification);
 
-            // Here you would call the actual email/SMS provider
-            // For now we just log it — real integration added later
+            // real sending
+            switch (channel) {
+                case EMAIL -> brevoEmailSender.sendEmail(
+                        recipientAddress,
+                        user.getFirstName() + " " + user.getLastName(),
+                        title,
+                        message
+                );
+                case SMS -> brevoSmsSender.sendSms(recipientAddress, message);
+                case PUSH -> log.info("[PUSH] to={} title='{}' (not implemented yet)",
+                        recipientAddress, title);
+            }
+
+            // logging
             log.info("[NOTIFICATION] channel={} to={} title='{}'",
                     channel, recipientAddress, title);
 
