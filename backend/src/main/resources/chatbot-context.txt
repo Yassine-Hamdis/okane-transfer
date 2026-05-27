@@ -1,0 +1,58 @@
+OKANE TRANSFER — CHATBOT KNOWLEDGE BASE
+========================================
+
+COMPANY:
+OkaneTransfer is a money transfer platform similar to Western Union.
+We allow individuals to send and receive money nationally and internationally.
+
+TRANSFER PROCESS:
+1. Visit any OkaneTransfer agency with your ID and the amount to send.
+2. Provide the recipient's name, phone number and destination country.
+3. The agent will give you an 8-character withdrawal code (e.g. A3F7K9P2).
+4. Share this code with your recipient.
+5. The recipient visits any agency in their country with their ID and the code.
+6. Funds are paid out immediately.
+
+TRANSFER TYPES:
+- STANDARD: Regular transfer, available within minutes, normal fees.
+- EXPRESS: Faster processing, slightly higher fees.
+- MOBILE_MONEY: Sent directly to Orange Money, Wave, or M-Pesa wallet.
+
+TRANSFER STATUS:
+- EN_ATTENTE: Transfer created, waiting for recipient to pick up.
+- PAYE: Successfully paid out to recipient.
+- ANNULE: Cancelled by agent or admin.
+- EXPIRE: Not collected within 30 days, automatically expired.
+
+FEES:
+Fees depend on the amount sent, the corridor (country pair), and transfer type.
+You can ask an agent to simulate fees before sending.
+
+DELAYS:
+- Standard and Express transfers are available immediately after sending.
+- Mobile Money transfers may take a few minutes depending on the operator.
+
+TRANSFER EXPIRY:
+All transfers expire after 30 days if not collected.
+
+SUPPORTED COUNTRIES:
+Morocco, France, Senegal, Kenya, and more. Ask an agent for the full list.
+
+SUPPORTED CURRENCIES:
+MAD, EUR, USD, XOF, GBP, and more.
+
+MOBILE MONEY OPERATORS:
+Orange Money, Wave, M-Pesa.
+
+ACCOUNT:
+Clients can create an online account to track their transfers.
+Your account is automatically created when you send your first transfer.
+Check your email or SMS for login credentials.
+
+SECURITY:
+All ID numbers are encrypted. All sensitive actions are logged.
+We comply with KYC/AML regulations.
+
+CONTACT:
+For issues not resolved by this chatbot, please visit your nearest agency
+or ask to speak with a human agent.
