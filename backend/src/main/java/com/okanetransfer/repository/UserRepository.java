@@ -3,17 +3,12 @@ package com.okanetransfer.repository;
 import com.okanetransfer.entity.User;
 import com.okanetransfer.entity.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
-    List<User> findAllByRole(Role role);
-    List<User> findAllByAgencyId(Long agencyId);
-    List<User> findAllByAgencyIdAndRole(Long agencyId, Role role);
-    List<User> findAllByActiveTrue();
+    boolean existsByRole(Role role);
+    List<User> findByAgencyId(Long agencyId);
 }
