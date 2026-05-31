@@ -49,7 +49,7 @@ public class Notification {
     @Column(name = "recipient_address", length = 255)
     private String recipientAddress;
 
-    @Column(name = "read", nullable = false)
+    @Column(name = "isRead", nullable = false)
     @Builder.Default
     private boolean read = false;
 

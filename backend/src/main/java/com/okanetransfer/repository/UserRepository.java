@@ -16,4 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAllByAgencyId(Long agencyId);
     List<User> findAllByAgencyIdAndRole(Long agencyId, Role role);
     List<User> findAllByActiveTrue();
+    Optional<User> findByPhoneAndPhoneOtp(String phone, String otp);
+
+    Optional<User> findByEmailToken(String token);
 }

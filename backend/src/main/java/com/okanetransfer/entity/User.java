@@ -48,6 +48,21 @@ public class User {
     @Column(name = "phone", nullable = false, length = 20)
     private String phone;
 
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private boolean emailVerified = false;
+
+    @Column(name = "phone_verified", nullable = false)
+    @Builder.Default
+    private boolean phoneVerified = false;
+
+    // Champs temporaires pour stocker les codes de validation
+    @Column(name = "email_token", unique = true)
+    private String emailToken;
+
+    @Column(name = "phone_otp", length = 6)
+    private String phoneOtp;
+
     // AES-256 encrypted — NULL for ROLE_ADMIN
     @Size(max = 500)
     @Column(name = "id_number_encrypted", length = 500)
@@ -60,7 +75,7 @@ public class User {
 
     @Column(name = "active", nullable = false)
     @Builder.Default
-    private boolean active = true;
+    private boolean active = false;
 
     @Column(name = "two_factor_enabled", nullable = false)
     @Builder.Default
