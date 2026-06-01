@@ -18,6 +18,17 @@ window.onload = function() {
           "http://localhost:8080/backend_war_exploded/"
       );
       return request;
+    },
+    responseInterceptor: function(response) {
+      if (response.url && response.url.includes('/api/auth/login') && response.body) {
+        try {
+          var body = JSON.parse(response.body);
+          if (body.accessToken) {
+            window.__swaggerToken = body.accessToken;
+          }
+        } catch(e) {}
+      }
+      return response;
     }
   });
 };
