@@ -1,7 +1,7 @@
 package com.okanetransfer.controller;
 
 import com.okanetransfer.dto.request.OtpVerifyRequest;
-import com.okanetransfer.dto.response.OtpVerifyResponse;
+import com.okanetransfer.dto.response.ApiResponse;
 import com.okanetransfer.entity.User;
 import com.okanetransfer.entity.enums.OtpType;
 import com.okanetransfer.repository.UserRepository;
@@ -32,24 +32,23 @@ public class OtpController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Generate a 2FA OTP for the authenticated user",
             description = "Returns plain code — in production sent via SMS only.")
-    public ResponseEntity<Map<String, String>> generate2Fa(
+    public ResponseEntity<ApiResponse<Map<String, String>>> generate2Fa(
             @AuthenticationPrincipal UserDetails userDetails) {
 
         User user = resolveUser(userDetails);
         String code = otpService.generateAndSave(user.getId(), OtpType.TWO_FACTOR);
 
         // In production, remove the code from the response and send via SMS
-        return ResponseEntity.ok(Map.of(
-                "message", "OTP generated successfully",
-                "code", code  // dev/test only
-        ));
+        return ResponseEntity.ok(
+                ApiResponse.success("OTP generated successfully", Map.of("code", code))
+        );
     }
 
     @PostMapping("/verify/2fa")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Verify a 2FA OTP",
             description = "Submit the 6-digit code. Blocked after 5 wrong attempts.")
-    public ResponseEntity<OtpVerifyResponse> verify2Fa(
+    public ResponseEntity<ApiResponse<Void>> verify2Fa(
             @Valid @RequestBody OtpVerifyRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
@@ -58,10 +57,10 @@ public class OtpController {
 
         if (valid) {
             return ResponseEntity.ok(
-                    new OtpVerifyResponse(true, "OTP verified successfully"));
+                    ApiResponse.success("OTP verified successfully"));
         }
         return ResponseEntity.badRequest().body(
-                new OtpVerifyResponse(false, "Invalid or expired OTP"));
+                ApiResponse.error("Invalid or expired OTP"));
     }
 
     // ── Withdrawal OTP endpoints ───────────────────────────────────────────────
@@ -70,22 +69,23 @@ public class OtpController {
     @PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
     @Operation(summary = "Generate a withdrawal OTP for a transfer",
             description = "Agent calls this before payout. Code is given to the recipient.")
-    public ResponseEntity<Map<String, String>> generateWithdrawal(
+    public ResponseEntity<ApiResponse<Map<String, String>>> generateWithdrawal(
             @PathVariable Long transferId) {
 
         String code = otpService.generateForTransfer(transferId);
-        return ResponseEntity.ok(Map.of(
-                "message", "Withdrawal OTP generated",
-                "code", code,
-                "transferId", String.valueOf(transferId)
-        ));
+        return ResponseEntity.ok(
+                ApiResponse.success("Withdrawal OTP generated", Map.of(
+                        "code", code,
+                        "transferId", String.valueOf(transferId)
+                ))
+        );
     }
 
     @PostMapping("/verify/withdrawal/{transferId}")
     @PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
     @Operation(summary = "Verify a withdrawal OTP",
             description = "Agent verifies the code presented by the recipient before paying out.")
-    public ResponseEntity<OtpVerifyResponse> verifyWithdrawal(
+    public ResponseEntity<ApiResponse<Void>> verifyWithdrawal(
             @PathVariable Long transferId,
             @Valid @RequestBody OtpVerifyRequest request) {
 
@@ -93,10 +93,10 @@ public class OtpController {
 
         if (valid) {
             return ResponseEntity.ok(
-                    new OtpVerifyResponse(true, "Withdrawal code verified"));
+                    ApiResponse.success("Withdrawal code verified"));
         }
         return ResponseEntity.badRequest().body(
-                new OtpVerifyResponse(false, "Invalid or expired withdrawal code"));
+                ApiResponse.error("Invalid or expired withdrawal code"));
     }
 
     // ── Helper ─────────────────────────────────────────────────────────────────
