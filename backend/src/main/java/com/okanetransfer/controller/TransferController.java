@@ -3,6 +3,7 @@ package com.okanetransfer.controller;
 import com.okanetransfer.dto.request.CancelTransferRequest;
 import com.okanetransfer.dto.request.CreateTransferRequest;
 import com.okanetransfer.dto.request.PayoutRequest;
+import com.okanetransfer.dto.response.ApiResponse;
 import com.okanetransfer.dto.response.TransferResponse;
 import com.okanetransfer.entity.enums.TransferStatus;
 import com.okanetransfer.repository.UserRepository;
@@ -26,95 +27,113 @@ public class TransferController {
     @Autowired private TransferService transferService;
     @Autowired private UserRepository  userRepository;
 
-    // ── Agent endpoints ────────────────────────────────
-
     @PostMapping("/api/agent/transfers")
-    @PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Create a new transfer")
-    public ResponseEntity<TransferResponse> create(
+    public ResponseEntity<ApiResponse<TransferResponse>> create(
             @Valid @RequestBody CreateTransferRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                transferService.createTransfer(request, resolveUserId(userDetails)));
+                ApiResponse.success("Transfer created successfully",
+                        transferService.createTransfer(
+                                request, resolveUserId(userDetails))));
     }
 
     @PostMapping("/api/agent/transfers/payout")
-    @PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Pay out a transfer to recipient")
-    public ResponseEntity<TransferResponse> payout(
+    public ResponseEntity<ApiResponse<TransferResponse>> payout(
             @Valid @RequestBody PayoutRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                transferService.processPayment(request, resolveUserId(userDetails)));
+                ApiResponse.success("Transfer paid out successfully",
+                        transferService.processPayment(
+                                request, resolveUserId(userDetails))));
     }
 
     @GetMapping("/api/agent/transfers/{id}")
-    @PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Get transfer by ID")
-    public ResponseEntity<TransferResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(transferService.getById(id));
+    public ResponseEntity<ApiResponse<TransferResponse>> getById(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Transfer retrieved successfully",
+                        transferService.getById(id)));
     }
 
     @GetMapping("/api/agent/transfers/code/{code}")
-    @PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Get transfer by withdrawal code")
-    public ResponseEntity<TransferResponse> getByCode(@PathVariable String code) {
-        return ResponseEntity.ok(transferService.getByWithdrawalCode(code));
+    public ResponseEntity<ApiResponse<TransferResponse>> getByCode(
+            @PathVariable String code) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Transfer retrieved successfully",
+                        transferService.getByWithdrawalCode(code)));
     }
 
     @GetMapping("/api/agent/transfers/my")
-    @PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Get my transfers as agent")
-    public ResponseEntity<List<TransferResponse>> getMyTransfers(
+    public ResponseEntity<ApiResponse<List<TransferResponse>>> getMyTransfers(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                transferService.getMyTransfersAsAgent(resolveUserId(userDetails)));
+                ApiResponse.success("Transfers retrieved successfully",
+                        transferService.getMyTransfersAsAgent(
+                                resolveUserId(userDetails))));
     }
 
     @GetMapping("/api/agent/transfers/search")
-    @PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Search transfers by recipient phone")
-    public ResponseEntity<List<TransferResponse>> searchByPhone(
+    public ResponseEntity<ApiResponse<List<TransferResponse>>> searchByPhone(
             @RequestParam String phone) {
-        return ResponseEntity.ok(transferService.searchByRecipientPhone(phone));
+        return ResponseEntity.ok(
+                ApiResponse.success("Transfers retrieved successfully",
+                        transferService.searchByRecipientPhone(phone)));
     }
 
     @PatchMapping("/api/agent/transfers/{id}/cancel")
-    @PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Cancel a transfer")
-    public ResponseEntity<TransferResponse> cancel(
+    public ResponseEntity<ApiResponse<TransferResponse>> cancel(
             @PathVariable Long id,
             @Valid @RequestBody CancelTransferRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                transferService.cancelTransfer(id, request, resolveUserId(userDetails)));
+                ApiResponse.success("Transfer cancelled successfully",
+                        transferService.cancelTransfer(
+                                id, request, resolveUserId(userDetails))));
     }
 
-    // ── Admin endpoints ────────────────────────────────
-
     @GetMapping("/api/admin/transfers")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get all transfers")
-    public ResponseEntity<List<TransferResponse>> getAll() {
-        return ResponseEntity.ok(transferService.getAll());
+    public ResponseEntity<ApiResponse<List<TransferResponse>>> getAll() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Transfers retrieved successfully",
+                        transferService.getAll()));
     }
 
     @GetMapping("/api/admin/transfers/status/{status}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get transfers by status")
-    public ResponseEntity<List<TransferResponse>> getByStatus(
+    public ResponseEntity<ApiResponse<List<TransferResponse>>> getByStatus(
             @PathVariable TransferStatus status) {
-        return ResponseEntity.ok(transferService.getByStatus(status));
+        return ResponseEntity.ok(
+                ApiResponse.success("Transfers retrieved successfully",
+                        transferService.getByStatus(status)));
     }
 
     @PatchMapping("/api/admin/transfers/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Approve a blocked transfer")
-    public ResponseEntity<TransferResponse> approve(
+    public ResponseEntity<ApiResponse<TransferResponse>> approve(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                transferService.approveTransfer(id, resolveUserId(userDetails)));
+                ApiResponse.success("Transfer approved successfully",
+                        transferService.approveTransfer(
+                                id, resolveUserId(userDetails))));
     }
 
     private Long resolveUserId(UserDetails userDetails) {
