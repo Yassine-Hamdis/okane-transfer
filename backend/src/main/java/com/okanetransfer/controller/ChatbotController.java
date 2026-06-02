@@ -2,6 +2,7 @@ package com.okanetransfer.controller;
 
 import com.okanetransfer.dto.request.SendMessageRequest;
 import com.okanetransfer.dto.request.StartConversationRequest;
+import com.okanetransfer.dto.response.ApiResponse;
 import com.okanetransfer.dto.response.SendMessageResponse;
 import com.okanetransfer.dto.response.StartConversationResponse;
 import com.okanetransfer.entity.ChatbotConversation;
@@ -25,54 +26,58 @@ import java.util.List;
 @Tag(name = "Chatbot", description = "AI-powered customer support chatbot")
 public class ChatbotController {
 
-    @Autowired
-    private ChatbotService chatbotService;
-
-    @Autowired
-    private UserRepository userRepository;
+    @Autowired private ChatbotService chatbotService;
+    @Autowired private UserRepository userRepository;
 
     @PostMapping("/start")
     @Operation(summary = "Start a new chatbot conversation")
-    public ResponseEntity<StartConversationResponse> start(
+    public ResponseEntity<ApiResponse<StartConversationResponse>> start(
             @RequestBody StartConversationRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = resolveUserId(userDetails);
         return ResponseEntity.ok(
-                chatbotService.startConversation(userId, request));
+                ApiResponse.success("Conversation started",
+                        chatbotService.startConversation(
+                                resolveUserId(userDetails), request)));
     }
 
     @PostMapping("/message")
     @Operation(summary = "Send a message to the chatbot")
-    public ResponseEntity<SendMessageResponse> message(
+    public ResponseEntity<ApiResponse<SendMessageResponse>> message(
             @Valid @RequestBody SendMessageRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long userId = resolveUserId(userDetails);
-        return ResponseEntity.ok(chatbotService.sendMessage(request, userId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Message sent",
+                        chatbotService.sendMessage(request,
+                                resolveUserId(userDetails))));
     }
 
     @GetMapping("/{sessionId}/messages")
     @Operation(summary = "Get all messages in a conversation")
-    public ResponseEntity<List<ChatbotMessage>> getMessages(
+    public ResponseEntity<ApiResponse<List<ChatbotMessage>>> getMessages(
             @PathVariable String sessionId) {
-        return ResponseEntity.ok(chatbotService.getMessages(sessionId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Messages retrieved successfully",
+                        chatbotService.getMessages(sessionId)));
     }
 
     @PatchMapping("/{sessionId}/close")
     @Operation(summary = "Close a conversation")
-    public ResponseEntity<Void> close(@PathVariable String sessionId) {
+    public ResponseEntity<ApiResponse<Void>> close(
+            @PathVariable String sessionId) {
         chatbotService.closeConversation(sessionId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                ApiResponse.success("Conversation closed successfully"));
     }
 
     @GetMapping("/escalated")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Get all escalated conversations — Admin only")
-    public ResponseEntity<List<ChatbotConversation>> getEscalated() {
-        return ResponseEntity.ok(chatbotService.getEscalated());
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Get all escalated conversations")
+    public ResponseEntity<ApiResponse<List<ChatbotConversation>>> getEscalated() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Escalated conversations retrieved",
+                        chatbotService.getEscalated()));
     }
 
-    // ── Helper ─────────────────────────────────────────
-    // Returns null for anonymous users (chatbot is public)
     private Long resolveUserId(UserDetails userDetails) {
         if (userDetails == null) return null;
         return userRepository.findByEmail(userDetails.getUsername())

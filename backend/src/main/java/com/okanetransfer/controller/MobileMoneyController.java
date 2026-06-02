@@ -1,6 +1,7 @@
 package com.okanetransfer.controller;
 
 import com.okanetransfer.dto.request.CreateMobileMoneyRequest;
+import com.okanetransfer.dto.response.ApiResponse;
 import com.okanetransfer.dto.response.MobileMoneyResponse;
 import com.okanetransfer.repository.UserRepository;
 import com.okanetransfer.service.MobileMoneyService;
@@ -20,52 +21,58 @@ import java.util.List;
 @Tag(name = "Mobile Money", description = "Mobile money transfer management")
 public class MobileMoneyController {
 
-    @Autowired
-    private MobileMoneyService mobileMoneyService;
-
-    @Autowired
-    private UserRepository userRepository;
+    @Autowired private MobileMoneyService mobileMoneyService;
+    @Autowired private UserRepository     userRepository;
 
     @PostMapping("/api/agent/mobile-money")
-    @PreAuthorize("hasAnyRole('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Initiate a mobile money transfer")
-    public ResponseEntity<MobileMoneyResponse> initiate(
+    public ResponseEntity<ApiResponse<MobileMoneyResponse>> initiate(
             @Valid @RequestBody CreateMobileMoneyRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long agentId = resolveUserId(userDetails);
-        return ResponseEntity.ok(mobileMoneyService.initiate(request, agentId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Mobile money transfer initiated successfully",
+                        mobileMoneyService.initiate(request,
+                                resolveUserId(userDetails))));
     }
 
     @GetMapping("/api/agent/mobile-money/transfer/{transferId}")
-    @PreAuthorize("hasAnyRole('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Get mobile money record for a transfer")
-    public ResponseEntity<MobileMoneyResponse> getByTransfer(
+    public ResponseEntity<ApiResponse<MobileMoneyResponse>> getByTransfer(
             @PathVariable Long transferId) {
-        return ResponseEntity.ok(mobileMoneyService.getByTransfer(transferId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Mobile money record retrieved successfully",
+                        mobileMoneyService.getByTransfer(transferId)));
     }
 
     @GetMapping("/api/admin/mobile-money/pending")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get all pending mobile money transfers")
-    public ResponseEntity<List<MobileMoneyResponse>> getPending() {
-        return ResponseEntity.ok(mobileMoneyService.getPending());
+    public ResponseEntity<ApiResponse<List<MobileMoneyResponse>>> getPending() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Pending mobile money transfers retrieved",
+                        mobileMoneyService.getPending()));
     }
 
     @GetMapping("/api/admin/mobile-money/sent")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @Operation(summary = "Get all sent (awaiting reconciliation) transfers")
-    public ResponseEntity<List<MobileMoneyResponse>> getSent() {
-        return ResponseEntity.ok(mobileMoneyService.getSent());
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Get all sent mobile money transfers")
+    public ResponseEntity<ApiResponse<List<MobileMoneyResponse>>> getSent() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Sent mobile money transfers retrieved",
+                        mobileMoneyService.getSent()));
     }
 
     @PatchMapping("/api/admin/mobile-money/{id}/reconcile")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Reconcile a mobile money transfer")
-    public ResponseEntity<MobileMoneyResponse> reconcile(
+    public ResponseEntity<ApiResponse<MobileMoneyResponse>> reconcile(
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long adminId = resolveUserId(userDetails);
-        return ResponseEntity.ok(mobileMoneyService.reconcile(id, adminId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Mobile money transfer reconciled successfully",
+                        mobileMoneyService.reconcile(id, resolveUserId(userDetails))));
     }
 
     private Long resolveUserId(UserDetails userDetails) {

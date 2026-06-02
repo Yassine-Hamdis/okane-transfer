@@ -2,6 +2,7 @@ package com.okanetransfer.controller;
 
 import com.okanetransfer.dto.request.ChangePasswordRequest;
 import com.okanetransfer.dto.request.UpdateProfileRequest;
+import com.okanetransfer.dto.response.ApiResponse;
 import com.okanetransfer.dto.response.ClientProfileResponse;
 import com.okanetransfer.dto.response.TransferSummaryResponse;
 import com.okanetransfer.dto.response.TransferTrackResponse;
@@ -21,80 +22,84 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/client")
-@PreAuthorize("hasRole('ROLE_CLIENT')")
 @Tag(name = "Client", description = "Client self-service portal")
 public class ClientController {
 
-    @Autowired
-    private ClientService clientService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    // ── Profile ────────────────────────────────────────
+    @Autowired private ClientService  clientService;
+    @Autowired private UserRepository userRepository;
 
     @GetMapping("/profile")
+    @PreAuthorize("hasAnyAuthority('ROLE_CLIENT','ROLE_ADMIN')")
     @Operation(summary = "Get my profile")
-    public ResponseEntity<ClientProfileResponse> getProfile(
+    public ResponseEntity<ApiResponse<ClientProfileResponse>> getProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                clientService.getMyProfile(resolveUserId(userDetails)));
+                ApiResponse.success("Profile retrieved successfully",
+                        clientService.getMyProfile(resolveUserId(userDetails))));
     }
 
     @PutMapping("/profile")
+    @PreAuthorize("hasAnyAuthority('ROLE_CLIENT','ROLE_ADMIN')")
     @Operation(summary = "Update my profile")
-    public ResponseEntity<ClientProfileResponse> updateProfile(
+    public ResponseEntity<ApiResponse<ClientProfileResponse>> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(
-                clientService.updateProfile(resolveUserId(userDetails), request));
+                ApiResponse.success("Profile updated successfully",
+                        clientService.updateProfile(
+                                resolveUserId(userDetails), request)));
     }
 
     @PatchMapping("/profile/change-password")
+    @PreAuthorize("hasAnyAuthority('ROLE_CLIENT','ROLE_ADMIN')")
     @Operation(summary = "Change my password")
-    public ResponseEntity<Void> changePassword(
+    public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest request) {
         clientService.changePassword(resolveUserId(userDetails), request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully"));
     }
 
     @PatchMapping("/profile/toggle-2fa")
+    @PreAuthorize("hasAnyAuthority('ROLE_CLIENT','ROLE_ADMIN')")
     @Operation(summary = "Enable or disable two-factor authentication")
-    public ResponseEntity<Void> toggleTwoFactor(
+    public ResponseEntity<ApiResponse<Void>> toggleTwoFactor(
             @AuthenticationPrincipal UserDetails userDetails) {
         clientService.toggleTwoFactor(resolveUserId(userDetails));
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(
+                ApiResponse.success("Two-factor authentication toggled successfully"));
     }
 
-    // ── Transfers ──────────────────────────────────────
-
     @GetMapping("/transfers")
+    @PreAuthorize("hasAnyAuthority('ROLE_CLIENT','ROLE_ADMIN')")
     @Operation(summary = "Get all my transfers")
-    public ResponseEntity<List<TransferSummaryResponse>> getMyTransfers(
+    public ResponseEntity<ApiResponse<List<TransferSummaryResponse>>> getTransfers(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                clientService.getMyTransfers(resolveUserId(userDetails)));
+                ApiResponse.success("Transfers retrieved successfully",
+                        clientService.getMyTransfers(resolveUserId(userDetails))));
     }
 
     @GetMapping("/transfers/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_CLIENT','ROLE_ADMIN')")
     @Operation(summary = "Get a specific transfer by ID")
-    public ResponseEntity<TransferSummaryResponse> getTransferById(
+    public ResponseEntity<ApiResponse<TransferSummaryResponse>> getTransferById(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
         return ResponseEntity.ok(
-                clientService.getMyTransferById(resolveUserId(userDetails), id));
+                ApiResponse.success("Transfer retrieved successfully",
+                        clientService.getMyTransferById(
+                                resolveUserId(userDetails), id)));
     }
 
     @GetMapping("/transfers/track/{code}")
-    @Operation(summary = "Track a transfer by withdrawal code — public endpoint")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<TransferTrackResponse> trackTransfer(
+    @Operation(summary = "Track a transfer by withdrawal code")
+    public ResponseEntity<ApiResponse<TransferTrackResponse>> track(
             @PathVariable String code) {
-        return ResponseEntity.ok(clientService.trackTransfer(code));
+        return ResponseEntity.ok(
+                ApiResponse.success("Transfer found",
+                        clientService.trackTransfer(code)));
     }
-
-    // ── Helper ─────────────────────────────────────────
 
     private Long resolveUserId(UserDetails userDetails) {
         return userRepository.findByEmail(userDetails.getUsername())

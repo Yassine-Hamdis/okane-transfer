@@ -1,5 +1,6 @@
 package com.okanetransfer.controller;
 
+import com.okanetransfer.dto.response.ApiResponse;
 import com.okanetransfer.dto.response.AuditLogResponse;
 import com.okanetransfer.service.AuditService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,8 +16,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/audit")
-@PreAuthorize("hasRole('ROLE_ADMIN')")
-@Tag(name = "Audit", description = "Audit log management — Admin only")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
+@Tag(name = "Audit", description = "Audit log management")
 public class AuditController {
 
     @Autowired
@@ -24,39 +25,49 @@ public class AuditController {
 
     @GetMapping
     @Operation(summary = "Get all audit logs")
-    public ResponseEntity<List<AuditLogResponse>> getAll() {
-        return ResponseEntity.ok(auditService.getAll());
+    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getAll() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Audit logs retrieved successfully",
+                        auditService.getAll()));
     }
 
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get audit logs for a specific user")
-    public ResponseEntity<List<AuditLogResponse>> getByUser(
+    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getByUser(
             @PathVariable Long userId) {
-        return ResponseEntity.ok(auditService.getByUser(userId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Audit logs retrieved successfully",
+                        auditService.getByUser(userId)));
     }
 
     @GetMapping("/entity/{entityType}/{entityId}")
     @Operation(summary = "Get audit logs for a specific entity")
-    public ResponseEntity<List<AuditLogResponse>> getByEntity(
+    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getByEntity(
             @PathVariable String entityType,
             @PathVariable Long entityId) {
-        return ResponseEntity.ok(auditService.getByEntity(entityType, entityId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Audit logs retrieved successfully",
+                        auditService.getByEntity(entityType, entityId)));
     }
 
     @GetMapping("/range")
     @Operation(summary = "Get audit logs within a date range")
-    public ResponseEntity<List<AuditLogResponse>> getByDateRange(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime to) {
-        return ResponseEntity.ok(auditService.getByDateRange(from, to));
+    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getByRange(
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Audit logs retrieved successfully",
+                        auditService.getByDateRange(from, to)));
     }
 
     @GetMapping("/action/{action}")
     @Operation(summary = "Get audit logs by action type")
-    public ResponseEntity<List<AuditLogResponse>> getByAction(
+    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getByAction(
             @PathVariable String action) {
-        return ResponseEntity.ok(auditService.getByAction(action));
+        return ResponseEntity.ok(
+                ApiResponse.success("Audit logs retrieved successfully",
+                        auditService.getByAction(action)));
     }
 }
