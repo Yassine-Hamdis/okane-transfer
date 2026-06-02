@@ -59,4 +59,28 @@ public class FeeGrid {
     @Column(name = "active", nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    @PrePersist
+    @PreUpdate
+    private void validate() {
+
+        if (minAmount != null && maxAmount != null
+                && minAmount.compareTo(maxAmount) >= 0) {
+            throw new IllegalStateException("minAmount must be < maxAmount");
+        }
+
+        if (feeFixedAmount != null && feeFixedAmount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalStateException("feeFixedAmount must be >= 0");
+        }
+
+        if (feePercentage != null &&
+                (feePercentage.compareTo(BigDecimal.ZERO) < 0 ||
+                        feePercentage.compareTo(BigDecimal.valueOf(100)) > 0)) {
+            throw new IllegalStateException("feePercentage must be between 0 and 100");
+        }
+
+        if (agencySharePercent + centralSharePercent != 100) {
+            throw new IllegalStateException("Revenue split must equal 100%");
+        }
+    }
 }

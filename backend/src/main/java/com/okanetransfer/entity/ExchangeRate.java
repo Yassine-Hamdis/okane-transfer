@@ -28,8 +28,9 @@ public class ExchangeRate {
     @Column(name = "rate", nullable = false, precision = 15, scale = 6)
     private BigDecimal rate;
 
-    @Column(name = "source", nullable = false, length = 10)
-    private String source;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "provider_id")
+    private ExchangeRateProvider provider;
 
     // NULL when rate comes from external API automatically
     @ManyToOne(fetch = FetchType.LAZY)

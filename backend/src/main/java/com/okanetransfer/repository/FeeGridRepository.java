@@ -32,4 +32,23 @@ public interface FeeGridRepository extends JpaRepository<FeeGrid, Long> {
 
     List<FeeGrid> findAllByCorridorIdAndTransferTypeAndActiveTrue(
             Long corridorId, TransferType transferType);
+
+    List<FeeGrid> findByCorridorIdAndTransferTypeAndActiveTrueOrderByMinAmountAsc(
+            Long corridorId,
+            TransferType transferType
+    );
+
+    @Query("""
+    SELECT f FROM FeeGrid f
+    WHERE f.corridor.id = :corridorId
+    AND f.transferType = :transferType
+    AND f.active = true
+    AND :amount >= f.minAmount
+    AND :amount < f.maxAmount
+""")
+    Optional<FeeGrid> findApplicableFeeGrid(
+            Long corridorId,
+            TransferType transferType,
+            BigDecimal amount
+    );
 }

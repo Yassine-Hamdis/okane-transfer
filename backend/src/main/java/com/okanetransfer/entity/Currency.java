@@ -25,12 +25,12 @@ public class Currency {
 
     @NotBlank
     @Size(max = 100)
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 100 , unique = true)
     private String name;
 
     @NotBlank
     @Size(max = 5)
-    @Column(name = "symbol", nullable = false, length = 5)
+    @Column(name = "symbol", nullable = false, length = 5, unique = true)
     private String symbol;
 
     @Column(name = "active", nullable = false)
