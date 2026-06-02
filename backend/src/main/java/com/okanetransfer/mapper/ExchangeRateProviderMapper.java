@@ -16,7 +16,6 @@ public class ExchangeRateProviderMapper {
                 .name(provider.getName())
                 .baseUrl(provider.getBaseUrl())
                 .active(provider.isActive())
-                .enabled(provider.isEnabled())
                 .description(provider.getDescription())
                 .build();
     }
