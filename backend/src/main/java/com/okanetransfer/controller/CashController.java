@@ -2,6 +2,7 @@ package com.okanetransfer.controller;
 
 import com.okanetransfer.dto.request.CloseCashRequest;
 import com.okanetransfer.dto.request.DiscrepancyRequest;
+import com.okanetransfer.dto.response.ApiResponse;
 import com.okanetransfer.dto.response.CashOperationResponse;
 import com.okanetransfer.dto.response.CashRegisterResponse;
 import com.okanetransfer.entity.User;
@@ -18,11 +19,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/agent/cash")
-@PreAuthorize("hasAnyRole('AGENT','MANAGER','ADMIN')")
+@PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
 @Tag(name = "Cash Management", description = "Agent cash register management")
 public class CashController {
 
@@ -30,52 +30,57 @@ public class CashController {
     @Autowired private UserRepository userRepository;
 
     @GetMapping("/my-register")
-    @Operation(summary = "Get my agency's cash register")
-    public ResponseEntity<CashRegisterResponse> getMyRegister(
+    @Operation(summary = "Get my agency cash register with balances")
+    public ResponseEntity<ApiResponse<CashRegisterResponse>> getMyRegister(
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long agencyId = resolveAgencyId(userDetails);
-        return ResponseEntity.ok(cashService.getRegisterByAgency(agencyId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Cash register retrieved successfully",
+                        cashService.getRegisterByAgency(resolveAgencyId(userDetails))));
     }
 
     @GetMapping("/my-register/operations/today")
     @Operation(summary = "Get today's cash operations")
-    public ResponseEntity<List<CashOperationResponse>> getTodayOperations(
+    public ResponseEntity<ApiResponse<List<CashOperationResponse>>> getTodayOps(
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long agencyId = resolveAgencyId(userDetails);
-        return ResponseEntity.ok(cashService.getTodayOperations(agencyId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Today's operations retrieved successfully",
+                        cashService.getTodayOperations(resolveAgencyId(userDetails))));
     }
 
     @GetMapping("/my-register/operations")
     @Operation(summary = "Get all cash operations history")
-    public ResponseEntity<List<CashOperationResponse>> getAllOperations(
+    public ResponseEntity<ApiResponse<List<CashOperationResponse>>> getAllOps(
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long agencyId = resolveAgencyId(userDetails);
-        return ResponseEntity.ok(cashService.getAllOperations(agencyId));
+        return ResponseEntity.ok(
+                ApiResponse.success("Operations retrieved successfully",
+                        cashService.getAllOperations(resolveAgencyId(userDetails))));
     }
 
     @PostMapping("/my-register/close")
     @Operation(summary = "Close cash register end of day")
-    public ResponseEntity<CashRegisterResponse> close(
+    public ResponseEntity<ApiResponse<CashRegisterResponse>> close(
             @RequestBody CloseCashRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long agentId  = resolveUserId(userDetails);
-        Long agencyId = resolveAgencyId(userDetails);
         return ResponseEntity.ok(
-                cashService.closeCashRegister(agencyId, agentId, request));
+                ApiResponse.success("Cash register closed successfully",
+                        cashService.closeCashRegister(
+                                resolveAgencyId(userDetails),
+                                resolveUserId(userDetails),
+                                request)));
     }
 
     @PostMapping("/my-register/discrepancy")
     @Operation(summary = "Report a cash discrepancy")
-    public ResponseEntity<Map<String, String>> reportDiscrepancy(
+    public ResponseEntity<ApiResponse<Void>> discrepancy(
             @Valid @RequestBody DiscrepancyRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Long agentId  = resolveUserId(userDetails);
-        Long agencyId = resolveAgencyId(userDetails);
-        cashService.reportDiscrepancy(agencyId, agentId, request);
-        return ResponseEntity.ok(Map.of("message", "Discrepancy reported successfully"));
+        cashService.reportDiscrepancy(
+                resolveAgencyId(userDetails),
+                resolveUserId(userDetails),
+                request);
+        return ResponseEntity.ok(
+                ApiResponse.success("Discrepancy reported successfully"));
     }
-
-    // ── Helpers ────────────────────────────────────────
 
     private Long resolveUserId(UserDetails userDetails) {
         return resolveUser(userDetails).getId();
@@ -84,7 +89,7 @@ public class CashController {
     private Long resolveAgencyId(UserDetails userDetails) {
         User user = resolveUser(userDetails);
         if (user.getAgency() == null) {
-            throw new IllegalStateException("User has no agency assigned");
+            throw new IllegalStateException("No agency assigned to this user");
         }
         return user.getAgency().getId();
     }
