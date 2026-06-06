@@ -1,7 +1,5 @@
 package com.okanetransfer.mapper;
 
-import com.okanetransfer.dto.response.ExchangeRateHistoryDto;
-import com.okanetransfer.dto.response.ExchangeRateResponseDto;
 import com.okanetransfer.entity.ExchangeRate;
 
 public class ExchangeRateMapper {

@@ -1,83 +1,91 @@
 package com.okanetransfer.controller;
 
+import com.okanetransfer.dto.request.CreateCurrencyRequest;
+import com.okanetransfer.dto.request.UpdateCurrencyRequest;
 import com.okanetransfer.dto.response.ApiResponse;
-import com.okanetransfer.dto.response.CurrencyResponseDto;
-import com.okanetransfer.dto.response.PaginationResponse;
-import com.okanetransfer.entity.Currency;
+import com.okanetransfer.dto.response.CurrencyResponse;
+import com.okanetransfer.repository.UserRepository;
 import com.okanetransfer.service.CurrencyService;
-import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 
 @RestController
-@RequestMapping("/api")
-@RequiredArgsConstructor
+@RequestMapping("/api/admin/currencies")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
+@Tag(name = "Currencies", description = "Currency management")
 public class CurrencyController {
 
-    private final CurrencyService currencyService;
+    @Autowired private CurrencyService currencyService;
+    @Autowired private UserRepository  userRepository;
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/admin/currencies")
-    public ResponseEntity<Currency> createCurrency(@RequestBody Currency currency) {
-        Currency saved = currencyService.createCurrency(currency);
-        return ResponseEntity.ok(saved);
+    @GetMapping
+    @Operation(summary = "Get all currencies")
+    public ResponseEntity<ApiResponse<List<CurrencyResponse>>> getAll() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Currencies retrieved successfully",
+                        currencyService.getAll()));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/admin/currencies/{id}")
-    public ResponseEntity<Currency> updateCurrency(
+    @GetMapping("/active")
+    @Operation(summary = "Get active currencies")
+    public ResponseEntity<ApiResponse<List<CurrencyResponse>>> getActive() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Active currencies retrieved successfully",
+                        currencyService.getActive()));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get currency by ID")
+    public ResponseEntity<ApiResponse<CurrencyResponse>> getById(
+            @PathVariable("id") Long id) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Currency retrieved successfully",
+                        currencyService.getById(id)));
+    }
+
+    @PostMapping
+    @Operation(summary = "Create currency")
+    public ResponseEntity<ApiResponse<CurrencyResponse>> create(
+            @Valid @RequestBody CreateCurrencyRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Currency created successfully",
+                        currencyService.create(request, resolveUserId(userDetails))));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update currency")
+    public ResponseEntity<ApiResponse<CurrencyResponse>> update(
             @PathVariable("id") Long id,
-            @RequestBody Currency currency) {
-
-        Currency updated = currencyService.updateCurrency(id, currency);
-        return ResponseEntity.ok(updated);
+            @Valid @RequestBody UpdateCurrencyRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Currency updated successfully",
+                        currencyService.update(id, request, resolveUserId(userDetails))));
     }
 
-    @PutMapping("/admin/currencies/{id}/toggle-status")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CurrencyResponseDto>> toggleStatus(@PathVariable("id") Long id) {
-
-        CurrencyResponseDto response = currencyService.toggleActive(id);
-
+    @PatchMapping("/{id}/toggle")
+    @Operation(summary = "Activate or deactivate currency")
+    public ResponseEntity<ApiResponse<CurrencyResponse>> toggle(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.<CurrencyResponseDto>builder()
-                        .success(true)
-                        .message("Currency status updated successfully")
-                        .data(response)
-                        .build()
-        );
+                ApiResponse.success("Currency status toggled successfully",
+                        currencyService.toggleActive(id, resolveUserId(userDetails))));
     }
 
-    @GetMapping("/agent/currencies/search")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
-    public ResponseEntity<ApiResponse<PaginationResponse<CurrencyResponseDto>>> searchCurrencies(
-
-            @RequestParam(name = "active",required = false) Boolean active,
-            @RequestParam(name = "keyword",required = false) String keyword,
-
-            @RequestParam(name = "page",defaultValue = "0") int page,
-            @RequestParam(name = "size",defaultValue = "10") int size,
-
-            @RequestParam(name = "sortBy",defaultValue = "id") String sortBy,
-            @RequestParam(name = "direction",defaultValue = "asc") String direction) {
-
-        PaginationResponse<CurrencyResponseDto> result =
-                currencyService.search(
-                        active,
-                        keyword,
-                        page,
-                        size,
-                        sortBy,
-                        direction);
-
-        return ResponseEntity.ok(
-                ApiResponse.<PaginationResponse<CurrencyResponseDto>>builder()
-                        .success(true)
-                        .message("Currencies retrieved successfully")
-                        .data(result)
-                        .build()
-        );
+    private Long resolveUserId(UserDetails userDetails) {
+        return userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
     }
 }

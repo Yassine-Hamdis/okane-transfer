@@ -1,211 +1,156 @@
 package com.okanetransfer.service;
 
-import com.okanetransfer.dto.response.CountryLookupDto;
-import com.okanetransfer.dto.response.PaginationResponse;
 import com.okanetransfer.dto.request.CreateCountryRequest;
 import com.okanetransfer.dto.request.UpdateCountryRequest;
-import com.okanetransfer.dto.response.CountryResponseDto;
+import com.okanetransfer.dto.response.CountryResponse;
 import com.okanetransfer.entity.Country;
-import com.okanetransfer.entity.Currency;
-import com.okanetransfer.mapper.CountryMapper;
+import com.okanetransfer.exception.ResourceNotFoundException;
 import com.okanetransfer.repository.CountryRepository;
-import com.okanetransfer.repository.CurrencyRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Service
 public class CountryService {
 
-    private final CountryRepository countryRepository;
-    private final CurrencyRepository currencyRepository;
-    private final CorridorService corridorService;;
+    @Autowired
+    private CountryRepository countryRepository;
 
-    public CountryService(CountryRepository countryRepository, CurrencyRepository currencyRepository, CorridorService corridorService) {
-        this.countryRepository = countryRepository;
-        this.currencyRepository = currencyRepository;
-        this.corridorService = corridorService;
+    @Autowired
+    private AuditService auditService;
+
+    @Transactional(readOnly = true)
+    public List<CountryResponse> getAll() {
+        return countryRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
-    private void refreshCorridors(Long countryId) {
-        corridorService.refreshCorridorsByCountry(countryId);
+    @Transactional(readOnly = true)
+    public List<CountryResponse> getActive() {
+        return countryRepository.findAllByActiveTrue()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CountryResponse> getSendingCountries() {
+        return countryRepository.findAllByAllowsSendingTrue()
+                .stream()
+                .filter(Country::isActive)
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CountryResponse> getReceivingCountries() {
+        return countryRepository.findAllByAllowsReceivingTrue()
+                .stream()
+                .filter(Country::isActive)
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public CountryResponse getById(Long id) {
+        return toResponse(findCountry(id));
     }
 
     @Transactional
-    public CountryResponseDto create(CreateCountryRequest request) {
+    public CountryResponse create(CreateCountryRequest request, Long adminId) {
+        String code = normalizeCode(request.getCode());
 
-        if (countryRepository.existsByName(request.getName())) {
-            throw new RuntimeException("Country name already exists");
+        if (countryRepository.existsByCode(code)) {
+            throw new IllegalArgumentException("Country code already exists: " + code);
         }
 
-        if (countryRepository.existsByCode(request.getCode())) {
-            throw new RuntimeException("Country code already exists");
+        if (countryRepository.findByName(request.getName()).isPresent()) {
+            throw new IllegalArgumentException("Country name already exists: " + request.getName());
         }
-
-        Currency currency = currencyRepository.findById(
-                request.getDefaultCurrencyId()
-        ).orElseThrow(() ->
-                new RuntimeException("Currency not found"));
 
         Country country = Country.builder()
                 .name(request.getName())
-                .code(request.getCode())
-                .defaultCurrency(currency)
+                .code(code)
+                .allowsSending(request.getAllowsSending() == null || request.getAllowsSending())
+                .allowsReceiving(request.getAllowsReceiving() == null || request.getAllowsReceiving())
+                .active(true)
                 .build();
 
-        return CountryMapper.toDto(
-                countryRepository.save(country)
-        );
+        Country saved = countryRepository.save(country);
+
+        auditService.log(adminId, "COUNTRY_CREATED", "Country", saved.getId(),
+                "{\"code\":\"" + code + "\"}");
+
+        return toResponse(saved);
     }
 
     @Transactional
-    public CountryResponseDto update(
-            Long id,
-            UpdateCountryRequest request) {
+    public CountryResponse update(Long id, UpdateCountryRequest request, Long adminId) {
+        Country country = findCountry(id);
+        String code = normalizeCode(request.getCode());
 
-        Country country = countryRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Country not found"));
+        countryRepository.findByCode(code).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) {
+                throw new IllegalArgumentException("Country code already exists: " + code);
+            }
+        });
 
-        if (countryRepository.existsByNameAndIdNot(
-                request.getName(),
-                id)) {
-            throw new RuntimeException("Country name already exists");
-        }
-
-        if (countryRepository.existsByCodeAndIdNot(
-                request.getCode(),
-                id)) {
-            throw new RuntimeException("Country code already exists");
-        }
-
-        Currency currency = currencyRepository.findById(
-                        request.getDefaultCurrencyId())
-                .orElseThrow(() ->
-                        new RuntimeException("Currency not found"));
+        countryRepository.findByName(request.getName()).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) {
+                throw new IllegalArgumentException("Country name already exists: " + request.getName());
+            }
+        });
 
         country.setName(request.getName());
-        country.setCode(request.getCode());
-        country.setDefaultCurrency(currency);
-
-        return CountryMapper.toDto(
-                countryRepository.save(country)
-        );
-    }
-
-    @Transactional
-    public CountryResponseDto toggleActive(Long id) {
-
-        Country country = countryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Country not found"));
-
-        boolean newState = !country.isActive();
-        country.setActive(newState);
+        country.setCode(code);
+        country.setAllowsSending(request.getAllowsSending() == null || request.getAllowsSending());
+        country.setAllowsReceiving(request.getAllowsReceiving() == null || request.getAllowsReceiving());
 
         Country saved = countryRepository.save(country);
 
-        //  cascade only if disable OR enable
-        refreshCorridors(id);
+        auditService.log(adminId, "COUNTRY_UPDATED", "Country", id, null);
 
-        return CountryMapper.toDto(saved);
+        return toResponse(saved);
     }
 
     @Transactional
-    public CountryResponseDto toggleSending(Long id) {
-
-        Country country = countryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Country not found"));
-
-        country.setAllowsSending(!country.isAllowsSending());
-
+    public CountryResponse toggleActive(Long id, Long adminId) {
+        Country country = findCountry(id);
+        country.setActive(!country.isActive());
         Country saved = countryRepository.save(country);
 
-        //  recalcul corridors ALWAYS (important rule)
-        refreshCorridors(id);
+        auditService.log(adminId,
+                saved.isActive() ? "COUNTRY_ACTIVATED" : "COUNTRY_DEACTIVATED",
+                "Country",
+                id,
+                null);
 
-        return CountryMapper.toDto(saved);
+        return toResponse(saved);
     }
 
-    @Transactional
-    public CountryResponseDto toggleReceiving(Long id) {
-
-        Country country = countryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Country not found"));
-
-        country.setAllowsReceiving(!country.isAllowsReceiving());
-
-        Country saved = countryRepository.save(country);
-
-        //  recalcul corridors ALWAYS
-        refreshCorridors(id);
-
-        return CountryMapper.toDto(saved);
+    private Country findCountry(Long id) {
+        return countryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Country", id));
     }
 
+    private String normalizeCode(String code) {
+        return code.trim().toUpperCase(Locale.ROOT);
+    }
 
-    @Transactional(readOnly = true)
-    public PaginationResponse<CountryResponseDto> search(
-            Boolean active,
-            String keyword,
-            int page,
-            int size,
-            String sortBy,
-            String direction) {
-
-        //  sécuriser tri
-        List<String> allowedSorts = List.of("id", "name", "code");
-
-        if (!allowedSorts.contains(sortBy)) {
-            sortBy = "id";
-        }
-
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<Country> result = countryRepository.searchCountries(
-                active,
-                keyword,
-                pageable
-        );
-
-        List<CountryResponseDto> content = result.getContent()
-                .stream()
-                .map(CountryMapper::toDto)
-                .toList();
-
-        return PaginationResponse.<CountryResponseDto>builder()
-                .content(content)
-                .page(result.getNumber())
-                .size(result.getSize())
-                .totalElements(result.getTotalElements())
-                .totalPages(result.getTotalPages())
-                .first(result.isFirst())
-                .last(result.isLast())
+    private CountryResponse toResponse(Country c) {
+        return CountryResponse.builder()
+                .id(c.getId())
+                .name(c.getName())
+                .code(c.getCode())
+                .allowsSending(c.isAllowsSending())
+                .allowsReceiving(c.isAllowsReceiving())
+                .active(c.isActive())
                 .build();
     }
-    @Transactional(readOnly = true)
-    public List<CountryLookupDto> searchLookup(String keyword) {
-
-        if (keyword == null) {
-            keyword = "";
-        }
-
-        return countryRepository.searchByKeyword(keyword)
-                .stream()
-                .map(c -> new CountryLookupDto(
-                        c.getId(),
-                        c.getName(),
-                        c.getCode()
-                ))
-                .toList();
-    }
-
 }

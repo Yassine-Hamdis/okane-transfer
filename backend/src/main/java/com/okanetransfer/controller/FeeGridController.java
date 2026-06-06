@@ -1,122 +1,109 @@
 package com.okanetransfer.controller;
 
 import com.okanetransfer.dto.request.CreateFeeGridRequest;
-import com.okanetransfer.dto.request.FeeGridProposalRequest;
-import com.okanetransfer.dto.response.*;
-import com.okanetransfer.entity.FeeGrid;
-import com.okanetransfer.entity.enums.TransferType;
-import com.okanetransfer.service.FeeService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
+import com.okanetransfer.dto.request.FeeSimulationRequest;
+import com.okanetransfer.dto.request.UpdateFeeGridRequest;
+import com.okanetransfer.dto.response.ApiResponse;
+import com.okanetransfer.dto.response.FeeGridResponse;
+import com.okanetransfer.dto.response.FeeSimulationResponse;
+import com.okanetransfer.repository.UserRepository;
+import com.okanetransfer.service.FeeGridService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@RequiredArgsConstructor
+@Tag(name = "Fee Grids", description = "Fee grid management and simulation")
 public class FeeGridController {
 
-    private final FeeService feeGridService;
+    @Autowired private FeeGridService feeGridService;
+    @Autowired private UserRepository userRepository;
 
-    @PostMapping("/admin/fee-grids/propose")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<FeeGridProposalResponse>> propose(
-            @RequestBody FeeGridProposalRequest request) {
-
-        FeeGridProposalResponse response =
-                feeGridService.propose(request);
-
+    @GetMapping("/admin/fee-grids")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Get all fee grids")
+    public ResponseEntity<ApiResponse<List<FeeGridResponse>>> getAll() {
         return ResponseEntity.ok(
-                ApiResponse.<FeeGridProposalResponse>builder()
-                        .success(true)
-                        .message("Fee grid simulation completed successfully")
-                        .data(response)
-                        .build()
-        );
+                ApiResponse.success("Fee grids retrieved successfully",
+                        feeGridService.getAll()));
     }
 
-
-    @PostMapping("/admin/fee-grids/create")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<FeeGrid>> create(
-            @RequestBody CreateFeeGridRequest request) {
-
-        FeeGrid created = feeGridService.createFeeGrid(request);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.<FeeGrid>builder()
-                        .success(true)
-                        .message("Fee grid created successfully")
-                        .data(created)
-                        .build()
-                );
-    }
-
-    @GetMapping("/admin/fee-grids/preview")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<FeeGridPreviewResponse> preview(
-            @RequestParam Long corridorId,
-            @RequestParam TransferType transferType
-    ) {
-
+    @GetMapping("/admin/fee-grids/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Get fee grid by ID")
+    public ResponseEntity<ApiResponse<FeeGridResponse>> getById(
+            @PathVariable("id") Long id) {
         return ResponseEntity.ok(
-                feeGridService.getFeePreview(corridorId, transferType)
-        );
+                ApiResponse.success("Fee grid retrieved successfully",
+                        feeGridService.getById(id)));
     }
 
-    @GetMapping("/admin/fee-grids/export/csv")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<byte[]> exportCsv(
-            @RequestParam Long corridorId,
-            @RequestParam TransferType transferType
-    ) {
-        byte[] data = feeGridService.exportCsv(corridorId, transferType);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=fee-grid.csv")
-                .header(HttpHeaders.CONTENT_TYPE, "text/csv")
-                .body(data);
-    }
-
-    @GetMapping("/admin/fee-grids/export/pdf")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<byte[]> exportPdf(
-            @RequestParam Long corridorId,
-            @RequestParam TransferType transferType
-    ) {
-        byte[] data = feeGridService.exportPdf(corridorId, transferType);
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=fee-grid.pdf")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(data);
-    }
-    @GetMapping("/agent/fee-grids/applicable")
-    @PreAuthorize("hasRole('AGENT') or hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<AgentFeeGridDto>> getApplicableFeeGrid(
-            @RequestParam Long corridorId,
-            @RequestParam TransferType transferType,
-            @RequestParam BigDecimal amount) {
-
-        AgentFeeGridDto response =
-                feeGridService.getApplicableFeeGrid(
-                        corridorId,
-                        transferType,
-                        amount
-                );
-
+    @GetMapping("/admin/fee-grids/corridor/{corridorId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Get fee grids by corridor")
+    public ResponseEntity<ApiResponse<List<FeeGridResponse>>> getByCorridor(
+            @PathVariable("corridorId") Long corridorId) {
         return ResponseEntity.ok(
-                ApiResponse.<AgentFeeGridDto>builder()
-                        .success(true)
-                        .message("Applicable fee grid retrieved successfully")
-                        .data(response)
-                        .build()
-        );
+                ApiResponse.success("Fee grids retrieved successfully",
+                        feeGridService.getByCorridor(corridorId)));
+    }
+
+    @PostMapping("/admin/fee-grids")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Create fee grid")
+    public ResponseEntity<ApiResponse<FeeGridResponse>> create(
+            @Valid @RequestBody CreateFeeGridRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Fee grid created successfully",
+                        feeGridService.create(request, resolveUserId(userDetails))));
+    }
+
+    @PutMapping("/admin/fee-grids/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Update fee grid")
+    public ResponseEntity<ApiResponse<FeeGridResponse>> update(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody UpdateFeeGridRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Fee grid updated successfully",
+                        feeGridService.update(id, request, resolveUserId(userDetails))));
+    }
+
+    @PatchMapping("/admin/fee-grids/{id}/toggle")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Activate or deactivate fee grid")
+    public ResponseEntity<ApiResponse<FeeGridResponse>> toggle(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Fee grid status toggled successfully",
+                        feeGridService.toggleActive(id, resolveUserId(userDetails))));
+    }
+
+    @PostMapping("/fees/simulate")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_MANAGER','ROLE_AGENT')")
+    @Operation(summary = "Simulate fee before creating a transfer")
+    public ResponseEntity<ApiResponse<FeeSimulationResponse>> simulate(
+            @Valid @RequestBody FeeSimulationRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Fee simulation completed",
+                        feeGridService.simulateFee(request)));
+    }
+
+    private Long resolveUserId(UserDetails userDetails) {
+        return userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
     }
 }

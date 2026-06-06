@@ -1,11 +1,13 @@
 package com.okanetransfer.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateCountryRequest {
 
     @NotBlank
@@ -13,9 +15,10 @@ public class CreateCountryRequest {
     private String name;
 
     @NotBlank
-    @Size(max = 3)
+    @Size(min = 2, max = 3)
     private String code;
 
-    @NotNull
-    private Long defaultCurrencyId;
+    private Boolean allowsSending = true;
+
+    private Boolean allowsReceiving = true;
 }

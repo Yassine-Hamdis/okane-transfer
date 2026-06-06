@@ -1,122 +1,107 @@
 package com.okanetransfer.service;
 
-import com.okanetransfer.dto.response.ExchangeRateHistoryDto;
-import com.okanetransfer.dto.response.ExchangeRateResponseDto;
-import com.okanetransfer.dto.response.PaginationResponse;
+import com.okanetransfer.dto.request.UpdateRateRequest;
+import com.okanetransfer.dto.response.ExchangeRateResponse;
 import com.okanetransfer.entity.Corridor;
 import com.okanetransfer.entity.ExchangeRate;
-import com.okanetransfer.entity.ExchangeRateProvider;
-import com.okanetransfer.mapper.ExchangeRateMapper;
+import com.okanetransfer.entity.User;
+import com.okanetransfer.exception.ResourceNotFoundException;
 import com.okanetransfer.repository.CorridorRepository;
-import com.okanetransfer.repository.ExchangeRateProviderRepository;
 import com.okanetransfer.repository.ExchangeRateRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import com.okanetransfer.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.lang.String.format;
 
 @Service
-@RequiredArgsConstructor
 public class ExchangeRateService {
 
-    private final CorridorRepository corridorRepository;
-    private final ExchangeRateRepository exchangeRateRepository;
-    private final ExchangeRateProviderRepository providerRepository;
-    private final ExchangeRateClientRouter router;
+    @Autowired
+    private ExchangeRateRepository exchangeRateRepository;
 
+    @Autowired
+    private CorridorRepository corridorRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private AuditService auditService;
+
+    @Transactional(readOnly = true)
+    public ExchangeRateResponse getCurrentRate(Long corridorId) {
+        ExchangeRate rate = exchangeRateRepository
+                .findByCorridorIdAndIsCurrentTrue(corridorId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Current exchange rate not found for corridor: " + corridorId));
+
+        return toResponse(rate);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ExchangeRateResponse> getHistory(Long corridorId) {
+        return exchangeRateRepository.findAllByCorridorIdOrderByRecordedAtDesc(corridorId)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
-    public ExchangeRateResponseDto refresh(Long corridorId) {
-
+    public ExchangeRateResponse updateManually(Long corridorId,
+                                               UpdateRateRequest request,
+                                               Long adminId) {
         Corridor corridor = corridorRepository.findById(corridorId)
-                .orElseThrow(() -> new RuntimeException("Corridor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Corridor", corridorId));
 
-        ExchangeRateProvider provider = providerRepository.findByActiveTrue()
-                .orElseThrow(() -> new RuntimeException("No active provider"));
-
-        BigDecimal newRate = router.getRate(
-                corridor.getSourceCurrency().getCode(),
-                corridor.getDestinationCurrency().getCode(),
-                provider
-        );
-
-        ExchangeRate last = exchangeRateRepository
-                .findByCorridorIdAndIsCurrentTrue(corridorId)
-                .orElse(null);
-
-        if (last != null && last.getRate().compareTo(newRate) == 0) {
-            return ExchangeRateMapper.toDto(last);
+        if (!corridor.isActive()) {
+            throw new IllegalArgumentException("Cannot update rate for inactive corridor");
         }
 
-        if (last != null) {
-            last.setCurrent(false);
-        }
+        User admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", adminId));
 
-        ExchangeRate rate = ExchangeRate.builder()
+        exchangeRateRepository.deactivateAllByCorridorId(corridorId);
+
+        ExchangeRate newRate = ExchangeRate.builder()
                 .corridor(corridor)
-                .provider(provider)
-                .rate(newRate)
+                .rate(request.getRate())
+                .source("MANUAL")
+                .updatedBy(admin)
                 .isCurrent(true)
                 .build();
 
-        ExchangeRate saved = exchangeRateRepository.save(rate);
+        ExchangeRate saved = exchangeRateRepository.save(newRate);
 
-        return ExchangeRateMapper.toDto(saved);
+        auditService.log(adminId, "RATE_UPDATED", "ExchangeRate", saved.getId(),
+                "{\"corridorId\":" + corridorId + ",\"rate\":\"" + request.getRate() + "\"}");
+
+        return toResponse(saved);
     }
 
-    @Transactional(readOnly = true)
-    public ExchangeRateResponseDto getCurrentRate(Long corridorId) {
+    private ExchangeRateResponse toResponse(ExchangeRate r) {
+        Corridor c = r.getCorridor();
 
-        ExchangeRate exchangeRate =
-                exchangeRateRepository
-                        .findByCorridorIdAndIsCurrentTrue(corridorId)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "No current exchange rate found for corridor "
-                                                + corridorId));
+        String label = format("%s → %s (%s → %s)",
+                c.getSourceCountry().getCode(),
+                c.getDestinationCountry().getCode(),
+                c.getSourceCurrency().getCode(),
+                c.getDestinationCurrency().getCode());
 
-        return ExchangeRateMapper.toDto(exchangeRate);
-    }
-
-    @Transactional(readOnly = true)
-    public PaginationResponse<ExchangeRateHistoryDto> getHistory(
-            Long corridorId,
-            int page,
-            int size) {
-
-        if (page < 0) page = 0;
-        if (size <= 0 || size > 50) size = 10;
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        Page<ExchangeRate> result =
-                exchangeRateRepository
-                        .findByCorridorIdOrderByRecordedAtDesc(
-                                corridorId,
-                                pageable
-                        );
-
-        List<ExchangeRateHistoryDto> content =
-                result.getContent()
-                        .stream()
-                        .map(ExchangeRateMapper::toHistoryDto)
-                        .toList();
-
-        return PaginationResponse.<ExchangeRateHistoryDto>builder()
-                .content(content)
-                .page(result.getNumber())
-                .size(result.getSize())
-                .totalElements(result.getTotalElements())
-                .totalPages(result.getTotalPages())
-                .first(result.isFirst())
-                .last(result.isLast())
+        return ExchangeRateResponse.builder()
+                .id(r.getId())
+                .corridorId(c.getId())
+                .corridorLabel(label)
+                .rate(r.getRate())
+                .source(r.getSource())
+                .current(r.isCurrent())
+                .updatedById(r.getUpdatedBy() != null ? r.getUpdatedBy().getId() : null)
+                .updatedByEmail(r.getUpdatedBy() != null ? r.getUpdatedBy().getEmail() : null)
+                .recordedAt(r.getRecordedAt())
                 .build();
     }
-
 }

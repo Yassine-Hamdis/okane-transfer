@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateFeeGridRequest {
+public class UpdateFeeGridRequest {
 
     @NotNull
     private Long corridorId;

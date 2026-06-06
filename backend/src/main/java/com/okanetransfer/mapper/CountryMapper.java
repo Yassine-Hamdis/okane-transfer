@@ -1,6 +1,5 @@
 package com.okanetransfer.mapper;
 
-import com.okanetransfer.dto.response.CountryResponseDto;
 import com.okanetransfer.entity.Country;
 
 public class CountryMapper {

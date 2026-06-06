@@ -3,141 +3,105 @@ package com.okanetransfer.controller;
 import com.okanetransfer.dto.request.CreateCountryRequest;
 import com.okanetransfer.dto.request.UpdateCountryRequest;
 import com.okanetransfer.dto.response.ApiResponse;
-import com.okanetransfer.dto.response.CountryLookupDto;
-import com.okanetransfer.dto.response.CountryResponseDto;
-import com.okanetransfer.dto.response.PaginationResponse;
+import com.okanetransfer.dto.response.CountryResponse;
+import com.okanetransfer.repository.UserRepository;
 import com.okanetransfer.service.CountryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
-@RequiredArgsConstructor
+@RequestMapping("/api/admin/countries")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
+@Tag(name = "Countries", description = "Country management")
 public class CountryController {
 
-    private final CountryService countryService;
+    @Autowired private CountryService countryService;
+    @Autowired private UserRepository userRepository;
 
-    @PostMapping("/admin/countries")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CountryResponseDto>> createCountry(
-            @Valid @RequestBody CreateCountryRequest request) {
-
-        CountryResponseDto country = countryService.create(request);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.<CountryResponseDto>builder()
-                        .success(true)
-                        .message("Country created successfully")
-                        .data(country)
-                        .build());
+    @GetMapping
+    @Operation(summary = "Get all countries")
+    public ResponseEntity<ApiResponse<List<CountryResponse>>> getAll() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Countries retrieved successfully",
+                        countryService.getAll()));
     }
 
-    @PutMapping("/admin/countries/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CountryResponseDto>> updateCountry(
+    @GetMapping("/active")
+    @Operation(summary = "Get active countries")
+    public ResponseEntity<ApiResponse<List<CountryResponse>>> getActive() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Active countries retrieved successfully",
+                        countryService.getActive()));
+    }
+
+    @GetMapping("/sending")
+    @Operation(summary = "Get countries allowed for sending")
+    public ResponseEntity<ApiResponse<List<CountryResponse>>> getSending() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Sending countries retrieved successfully",
+                        countryService.getSendingCountries()));
+    }
+
+    @GetMapping("/receiving")
+    @Operation(summary = "Get countries allowed for receiving")
+    public ResponseEntity<ApiResponse<List<CountryResponse>>> getReceiving() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Receiving countries retrieved successfully",
+                        countryService.getReceivingCountries()));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get country by ID")
+    public ResponseEntity<ApiResponse<CountryResponse>> getById(
+            @PathVariable("id") Long id) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Country retrieved successfully",
+                        countryService.getById(id)));
+    }
+
+    @PostMapping
+    @Operation(summary = "Create country")
+    public ResponseEntity<ApiResponse<CountryResponse>> create(
+            @Valid @RequestBody CreateCountryRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Country created successfully",
+                        countryService.create(request, resolveUserId(userDetails))));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update country")
+    public ResponseEntity<ApiResponse<CountryResponse>> update(
             @PathVariable("id") Long id,
-            @Valid @RequestBody UpdateCountryRequest request) {
-
-        CountryResponseDto country = countryService.update(id, request);
-
+            @Valid @RequestBody UpdateCountryRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.<CountryResponseDto>builder()
-                        .success(true)
-                        .message("Country updated successfully")
-                        .data(country)
-                        .build()
-        );
+                ApiResponse.success("Country updated successfully",
+                        countryService.update(id, request, resolveUserId(userDetails))));
     }
 
-    @PatchMapping("/admin/countries/{id}/toggle-active")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CountryResponseDto>> toggleActive(
-            @PathVariable("id") Long id) {
-
-        CountryResponseDto country = countryService.toggleActive(id);
-
+    @PatchMapping("/{id}/toggle")
+    @Operation(summary = "Activate or deactivate country")
+    public ResponseEntity<ApiResponse<CountryResponse>> toggle(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.<CountryResponseDto>builder()
-                        .success(true)
-                        .message("Country active status updated successfully")
-                        .data(country)
-                        .build()
-        );
+                ApiResponse.success("Country status toggled successfully",
+                        countryService.toggleActive(id, resolveUserId(userDetails))));
     }
 
-    @PatchMapping("/admin/countries/{id}/toggle-sending")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CountryResponseDto>> toggleSending(
-            @PathVariable("id") Long id) {
-
-        CountryResponseDto country = countryService.toggleSending(id);
-
-        return ResponseEntity.ok(
-                ApiResponse.<CountryResponseDto>builder()
-                        .success(true)
-                        .message("Country sending status updated successfully")
-                        .data(country)
-                        .build()
-        );
-    }
-
-    @PatchMapping("/admin/countries/{id}/toggle-receiving")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CountryResponseDto>> toggleReceiving(
-            @PathVariable("id") Long id) {
-
-        CountryResponseDto country = countryService.toggleReceiving(id);
-
-        return ResponseEntity.ok(
-                ApiResponse.<CountryResponseDto>builder()
-                        .success(true)
-                        .message("Country receiving status updated successfully")
-                        .data(country)
-                        .build()
-        );
-    }
-
-    @GetMapping("/admin/countries/search")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<PaginationResponse<CountryResponseDto>>> searchCountries(
-
-            @RequestParam(name="active" , required = false) Boolean active,
-            @RequestParam(name="keyword" , required = false) String keyword,
-
-            @RequestParam(name="page" , defaultValue = "0") int page,
-            @RequestParam(name="size" , defaultValue = "10") int size,
-
-            @RequestParam(name="sortBy" , defaultValue = "id") String sortBy,
-            @RequestParam(name="direction" , defaultValue = "asc") String direction) {
-
-        PaginationResponse<CountryResponseDto> result =
-                countryService.search(
-                        active,
-                        keyword,
-                        page,
-                        size,
-                        sortBy,
-                        direction);
-
-        return ResponseEntity.ok(
-                ApiResponse.<PaginationResponse<CountryResponseDto>>builder()
-                        .success(true)
-                        .message("Countries retrieved successfully")
-                        .data(result)
-                        .build()
-        );
-    }
-
-    @GetMapping("/countries/lookup")
-    public ResponseEntity<List<CountryLookupDto>> lookup(
-            @RequestParam("keyword") String keyword) {
-
-        return ResponseEntity.ok(countryService.searchLookup(keyword));
+    private Long resolveUserId(UserDetails userDetails) {
+        return userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
     }
 }

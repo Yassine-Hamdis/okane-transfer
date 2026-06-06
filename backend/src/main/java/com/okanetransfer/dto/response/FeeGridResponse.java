@@ -1,28 +1,27 @@
-package com.okanetransfer.dto.request;
+package com.okanetransfer.dto.response;
 
 import com.okanetransfer.entity.enums.TransferType;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class FeeGridProposalRequest {
-
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class FeeGridResponse {
+    private Long id;
     private Long corridorId;
-    private TransferType transferType;
-
+    private String corridorLabel;
+    private Long currencyId;
+    private String currencyCode;
     private BigDecimal minAmount;
     private BigDecimal maxAmount;
-
     private BigDecimal feeFixedAmount;
     private BigDecimal feePercentage;
-
     private Integer agencySharePercent;
     private Integer centralSharePercent;
-
-    // simulation input
-    private BigDecimal testAmount;
-    private String testCurrency;
+    private TransferType transferType;
+    private boolean active;
 }

@@ -1,19 +1,16 @@
 package com.okanetransfer.dto.response;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class CurrencyResponseDto {
-
+public class CurrencyResponse {
     private Long id;
-
     private String code;
-
     private String name;
-
     private String symbol;
-
     private boolean active;
 }

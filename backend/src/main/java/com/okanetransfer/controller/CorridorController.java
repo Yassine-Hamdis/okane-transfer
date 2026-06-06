@@ -2,109 +2,96 @@ package com.okanetransfer.controller;
 
 import com.okanetransfer.dto.request.CreateCorridorRequest;
 import com.okanetransfer.dto.response.ApiResponse;
-import com.okanetransfer.dto.response.CorridorResponseDto;
-import com.okanetransfer.dto.response.PaginationResponse;
+import com.okanetransfer.dto.response.CorridorResponse;
+import com.okanetransfer.repository.UserRepository;
 import com.okanetransfer.service.CorridorService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api")
-@RequiredArgsConstructor
+@RequestMapping("/api/admin/corridors")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
+@Tag(name = "Corridors", description = "Transfer corridor management")
 public class CorridorController {
 
-    private final CorridorService corridorService;
+    @Autowired private CorridorService corridorService;
+    @Autowired private UserRepository  userRepository;
 
-
-    @PostMapping("/admin/corridors")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CorridorResponseDto>> createCorridor(
-            @RequestBody CreateCorridorRequest request) {
-
-        CorridorResponseDto corridor = corridorService.create(request);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.<CorridorResponseDto>builder()
-                        .success(true)
-                        .message("Corridor created successfully")
-                        .data(corridor)
-                        .build());
+    @GetMapping
+    @Operation(summary = "Get all corridors")
+    public ResponseEntity<ApiResponse<List<CorridorResponse>>> getAll() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Corridors retrieved successfully",
+                        corridorService.getAll()));
     }
 
+    @GetMapping("/active")
+    @Operation(summary = "Get active corridors")
+    public ResponseEntity<ApiResponse<List<CorridorResponse>>> getActive() {
+        return ResponseEntity.ok(
+                ApiResponse.success("Active corridors retrieved successfully",
+                        corridorService.getActive()));
+    }
 
-    @PatchMapping("/admin/corridors/{id}/toggle-active")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CorridorResponseDto>> toggleActive(
+    @GetMapping("/{id}")
+    @Operation(summary = "Get corridor by ID")
+    public ResponseEntity<ApiResponse<CorridorResponse>> getById(
             @PathVariable("id") Long id) {
-
-        CorridorResponseDto corridor = corridorService.toggleActive(id);
-
         return ResponseEntity.ok(
-                ApiResponse.<CorridorResponseDto>builder()
-                        .success(true)
-                        .message("Corridor status updated successfully")
-                        .data(corridor)
-                        .build()
-        );
+                ApiResponse.success("Corridor retrieved successfully",
+                        corridorService.getById(id)));
     }
 
-
-    @GetMapping("/admin/corridors/search")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<PaginationResponse<CorridorResponseDto>>> search(
-
-            @RequestParam(name="sourceCountryId", required = false) Long sourceCountryId,
-            @RequestParam(name="destinationCountryId", required = false) Long destinationCountryId,
-            @RequestParam(name="active", required = false) Boolean active,
-
-            @RequestParam(name="page", defaultValue = "0") int page,
-            @RequestParam(name="size", defaultValue = "10") int size,
-
-            @RequestParam(name="sortBy", defaultValue = "id") String sortBy,
-            @RequestParam(name="direction", defaultValue = "asc") String direction) {
-
-        PaginationResponse<CorridorResponseDto> result =
-                corridorService.search(
-                        sourceCountryId,
-                        destinationCountryId,
-                        active,
-                        page,
-                        size,
-                        sortBy,
-                        direction
-                );
-
+    @GetMapping("/source/{countryId}")
+    @Operation(summary = "Get corridors by source country")
+    public ResponseEntity<ApiResponse<List<CorridorResponse>>> getBySource(
+            @PathVariable("countryId") Long countryId) {
         return ResponseEntity.ok(
-                ApiResponse.<PaginationResponse<CorridorResponseDto>>builder()
-                        .success(true)
-                        .message("Corridors retrieved successfully")
-                        .data(result)
-                        .build()
-        );
+                ApiResponse.success("Corridors retrieved successfully",
+                        corridorService.getBySourceCountry(countryId)));
     }
-    //search corridor by destination country id pour agent
 
-        @GetMapping("/agent/corridor")
-        @PreAuthorize("hasRole('AGENT') or hasRole('ADMIN')")
-        public ResponseEntity<ApiResponse<CorridorResponseDto>> getCorridor(
-                @RequestParam("sourceCountryId") Long sourceCountryId,
-                @RequestParam("destinationCountryId") Long destinationCountryId) {
+    @GetMapping("/destination/{countryId}")
+    @Operation(summary = "Get corridors by destination country")
+    public ResponseEntity<ApiResponse<List<CorridorResponse>>> getByDestination(
+            @PathVariable("countryId") Long countryId) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Corridors retrieved successfully",
+                        corridorService.getByDestinationCountry(countryId)));
+    }
 
-            CorridorResponseDto corridor =
-                    corridorService.getCorridor(sourceCountryId, destinationCountryId);
+    @PostMapping
+    @Operation(summary = "Create corridor")
+    public ResponseEntity<ApiResponse<CorridorResponse>> create(
+            @Valid @RequestBody CreateCorridorRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Corridor created successfully",
+                        corridorService.create(request, resolveUserId(userDetails))));
+    }
 
-            return ResponseEntity.ok(
-                    ApiResponse.<CorridorResponseDto>builder()
-                            .success(true)
-                            .message("Corridor found successfully")
-                            .data(corridor)
-                            .build()
-            );
-        }
+    @PatchMapping("/{id}/toggle")
+    @Operation(summary = "Activate or deactivate corridor")
+    public ResponseEntity<ApiResponse<CorridorResponse>> toggle(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.success("Corridor status toggled successfully",
+                        corridorService.toggleActive(id, resolveUserId(userDetails))));
+    }
 
+    private Long resolveUserId(UserDetails userDetails) {
+        return userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
+    }
 }

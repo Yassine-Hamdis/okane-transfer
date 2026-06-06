@@ -1,145 +1,126 @@
 package com.okanetransfer.service;
 
-import com.okanetransfer.dto.response.CurrencyResponseDto;
-import com.okanetransfer.dto.response.PaginationResponse;
-import com.okanetransfer.entity.Corridor;
-import com.okanetransfer.entity.Country;
+import com.okanetransfer.dto.request.CreateCurrencyRequest;
+import com.okanetransfer.dto.request.UpdateCurrencyRequest;
+import com.okanetransfer.dto.response.CurrencyResponse;
 import com.okanetransfer.entity.Currency;
-import com.okanetransfer.mapper.CurrencyMapper;
-import com.okanetransfer.repository.CorridorRepository;
-import com.okanetransfer.repository.CountryRepository;
+import com.okanetransfer.exception.ResourceNotFoundException;
 import com.okanetransfer.repository.CurrencyRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-public class  CurrencyService {
+public class CurrencyService {
 
-    private final CurrencyRepository currencyRepository;
-    private final CountryRepository countryRepository;
-    private final CorridorRepository corridorRepository;
-    ;
-    @Transactional
-    public Currency createCurrency(Currency currency) {
+    @Autowired
+    private CurrencyRepository currencyRepository;
 
-        //  check code exists
-        if (currencyRepository.existsByCode(currency.getCode())) {
-            throw new RuntimeException("Currency code already exists: " + currency.getCode());
-        }
+    @Autowired
+    private AuditService auditService;
 
-        //  check symbol exists
-        if (currencyRepository.existsBySymbol(currency.getSymbol())) {
-            throw new RuntimeException("Currency symbol already exists: " + currency.getSymbol());
-        }
-        //  check name exists
-        if (currencyRepository.existsByName(currency.getName())) {
-            throw new RuntimeException("Currency name already exists: " + currency.getName());
-        }
-
-        return currencyRepository.save(currency);
+    @Transactional(readOnly = true)
+    public List<CurrencyResponse> getAll() {
+        return currencyRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
-    @Transactional
-    public Currency updateCurrency(Long id, Currency updatedCurrency) {
 
-        //  1. vérifier existence
-        Currency existing = currencyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Currency not found with id: " + id));
+    @Transactional(readOnly = true)
+    public List<CurrencyResponse> getActive() {
+        return currencyRepository.findAllByActiveTrue()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
 
-        //  2. check code unique (sauf lui-même)
-        if (currencyRepository.existsByCodeAndIdNot(updatedCurrency.getCode(), id)) {
-            throw new RuntimeException("Currency code already exists");
-        }
-
-        //  3. check symbol unique (sauf lui-même)
-        if (currencyRepository.existsBySymbolAndIdNot(updatedCurrency.getSymbol(), id)) {
-            throw new RuntimeException("Currency symbol already exists");
-        }
-
-        // ✏️ 4. update fields
-        existing.setCode(updatedCurrency.getCode());
-        existing.setName(updatedCurrency.getName());
-        existing.setSymbol(updatedCurrency.getSymbol());
-        existing.setActive(updatedCurrency.isActive());
-
-        return currencyRepository.save(existing);
+    @Transactional(readOnly = true)
+    public CurrencyResponse getById(Long id) {
+        return toResponse(findCurrency(id));
     }
 
     @Transactional
-    public CurrencyResponseDto toggleActive(Long id) {
+    public CurrencyResponse create(CreateCurrencyRequest request, Long adminId) {
+        String code = normalizeCode(request.getCode());
 
-        Currency currency = currencyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Currency not found"));
+        if (currencyRepository.existsByCode(code)) {
+            throw new IllegalArgumentException("Currency code already exists: " + code);
+        }
 
-        boolean newState = !currency.isActive();
-        currency.setActive(newState);
+        Currency currency = Currency.builder()
+                .code(code)
+                .name(request.getName())
+                .symbol(request.getSymbol())
+                .active(true)
+                .build();
 
         Currency saved = currencyRepository.save(currency);
 
-        //  CASCADE BULK ONLY ON DISABLE
-        if (!newState) {
-            countryRepository.disableByCurrency(id);
-            corridorRepository.disableByCurrency(id);
-        }
+        auditService.log(adminId, "CURRENCY_CREATED", "Currency", saved.getId(),
+                "{\"code\":\"" + code + "\"}");
 
-        return CurrencyMapper.toDto(saved);
+        return toResponse(saved);
     }
 
+    @Transactional
+    public CurrencyResponse update(Long id, UpdateCurrencyRequest request, Long adminId) {
+        Currency currency = findCurrency(id);
+        String code = normalizeCode(request.getCode());
 
-    @Transactional(readOnly = true)
-    public PaginationResponse<CurrencyResponseDto> search(
-            Boolean active,
-            String keyword,
-            int page,
-            int size,
-            String sortBy,
-            String direction) {
+        currencyRepository.findByCode(code).ifPresent(existing -> {
+            if (!existing.getId().equals(id)) {
+                throw new IllegalArgumentException("Currency code already exists: " + code);
+            }
+        });
 
-        if (keyword == null) {
-            keyword = "";
-        }
+        currency.setCode(code);
+        currency.setName(request.getName());
+        currency.setSymbol(request.getSymbol());
 
-        List<String> allowedSorts = List.of("id", "code", "name", "symbol", "active");
+        Currency saved = currencyRepository.save(currency);
 
-        if (sortBy == null || !allowedSorts.contains(sortBy)) {
-            sortBy = "id";
-        }
+        auditService.log(adminId, "CURRENCY_UPDATED", "Currency", id, null);
 
-        if (direction == null ||
-                (!direction.equalsIgnoreCase("asc") && !direction.equalsIgnoreCase("desc"))) {
-            direction = "asc";
-        }
+        return toResponse(saved);
+    }
 
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
+    @Transactional
+    public CurrencyResponse toggleActive(Long id, Long adminId) {
+        Currency currency = findCurrency(id);
+        currency.setActive(!currency.isActive());
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Currency saved = currencyRepository.save(currency);
 
-        Page<Currency> result =
-                currencyRepository.searchCurrencies(active, keyword, pageable);
+        auditService.log(adminId,
+                saved.isActive() ? "CURRENCY_ACTIVATED" : "CURRENCY_DEACTIVATED",
+                "Currency",
+                id,
+                null);
 
-        List<CurrencyResponseDto> currencies =
-                result.getContent()
-                        .stream()
-                        .map(CurrencyMapper::toDto)
-                        .toList();
+        return toResponse(saved);
+    }
 
-        return PaginationResponse.<CurrencyResponseDto>builder()
-                .content(currencies)
-                .page(result.getNumber())
-                .size(result.getSize())
-                .totalElements(result.getTotalElements())
-                .totalPages(result.getTotalPages())
-                .first(result.isFirst())
-                .last(result.isLast())
+    private Currency findCurrency(Long id) {
+        return currencyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Currency", id));
+    }
+
+    private String normalizeCode(String code) {
+        return code.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private CurrencyResponse toResponse(Currency c) {
+        return CurrencyResponse.builder()
+                .id(c.getId())
+                .code(c.getCode())
+                .name(c.getName())
+                .symbol(c.getSymbol())
+                .active(c.isActive())
                 .build();
     }
 }

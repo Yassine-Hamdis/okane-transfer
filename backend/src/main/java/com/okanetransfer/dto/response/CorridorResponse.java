@@ -1,17 +1,17 @@
 package com.okanetransfer.dto.response;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class CorridorResponseDto {
-
+public class CorridorResponse {
     private Long id;
 
-    // ================= COUNTRY =================
     private Long sourceCountryId;
     private String sourceCountryName;
     private String sourceCountryCode;
@@ -20,19 +20,13 @@ public class CorridorResponseDto {
     private String destinationCountryName;
     private String destinationCountryCode;
 
-    // ================= CURRENCY =================
     private Long sourceCurrencyId;
     private String sourceCurrencyCode;
-    private String sourceCurrencySymbol;
 
     private Long destinationCurrencyId;
     private String destinationCurrencyCode;
-    private String destinationCurrencySymbol;
 
-    // ================= STATUS =================
     private boolean active;
-
-    // ================= AUDIT =================
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

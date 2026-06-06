@@ -1,38 +1,33 @@
 package com.okanetransfer.dto.response;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import com.okanetransfer.entity.enums.TransferType;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class FeeSimulationResponse {
+    private Long feeGridId;
 
-    // INPUT
-    private BigDecimal testAmount;
-    private String testCurrency;
+    private BigDecimal sentAmount;
+    private String sentCurrency;
 
-    // FX
-    private BigDecimal exchangeRateToSource;
-    private BigDecimal exchangeRateToDestination;
-    private BigDecimal amountInSourceCurrency;
+    private BigDecimal feeFixedAmount;
+    private BigDecimal feePercentage;
+    private BigDecimal feeAmount;
 
-    private String agencyCurrency;
-    private String destinationCurrency;
+    private BigDecimal amountAfterFee;
 
-    // FEES
-    private BigDecimal feeFixed;
-    private BigDecimal feePercentageValue;
-    private BigDecimal totalFee;
+    private BigDecimal exchangeRate;
+    private BigDecimal receivedAmount;
+    private String receivedCurrency;
 
     private BigDecimal agencyShare;
     private BigDecimal centralShare;
 
-    // FINAL
-    private BigDecimal totalPaidByClient;
-    private BigDecimal netSourceAmount;
-    private BigDecimal amountDestination;
+    private TransferType transferType;
 }

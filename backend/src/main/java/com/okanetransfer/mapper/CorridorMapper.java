@@ -1,6 +1,5 @@
 package com.okanetransfer.mapper;
 
-import com.okanetransfer.dto.response.CorridorResponseDto;
 import com.okanetransfer.entity.Corridor;
 
 public class CorridorMapper {

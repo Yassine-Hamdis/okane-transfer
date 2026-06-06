@@ -39,8 +39,4 @@ public class Country {
     @Column(name = "active", nullable = false)
     @Builder.Default
     private boolean active = true;
-
-    @ManyToOne
-    @JoinColumn(name = "currency_id") // FK dans country table
-    private Currency defaultCurrency;
 }

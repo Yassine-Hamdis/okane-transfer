@@ -1,6 +1,5 @@
 package com.okanetransfer.mapper;
 
-import com.okanetransfer.dto.response.CurrencyResponseDto;
 import com.okanetransfer.entity.Currency;
 
 public class CurrencyMapper {

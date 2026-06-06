@@ -8,17 +8,17 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateCountryRequest {
+public class CreateCurrencyRequest {
+
+    @NotBlank
+    @Size(min = 3, max = 3)
+    private String code;
 
     @NotBlank
     @Size(max = 100)
     private String name;
 
     @NotBlank
-    @Size(min = 2, max = 3)
-    private String code;
-
-    private Boolean allowsSending = true;
-
-    private Boolean allowsReceiving = true;
+    @Size(max = 5)
+    private String symbol;
 }

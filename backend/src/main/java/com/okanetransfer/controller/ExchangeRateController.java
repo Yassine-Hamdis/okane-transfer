@@ -1,72 +1,64 @@
 package com.okanetransfer.controller;
 
+import com.okanetransfer.dto.request.UpdateRateRequest;
 import com.okanetransfer.dto.response.ApiResponse;
-import com.okanetransfer.dto.response.ExchangeRateHistoryDto;
-import com.okanetransfer.dto.response.ExchangeRateResponseDto;
-import com.okanetransfer.dto.response.PaginationResponse;
+import com.okanetransfer.dto.response.ExchangeRateResponse;
+import com.okanetransfer.repository.UserRepository;
 import com.okanetransfer.service.ExchangeRateService;
-import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/auth")
-@RequiredArgsConstructor
+@RequestMapping("/api/admin/exchange-rates")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
+@Tag(name = "Exchange Rates", description = "Exchange rate management")
 public class ExchangeRateController {
 
-    private final ExchangeRateService exchangeRateService;
+    @Autowired private ExchangeRateService exchangeRateService;
+    @Autowired private UserRepository      userRepository;
 
-    @PostMapping("/agent/exchange-rates/refresh/{corridorId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
-    public ResponseEntity<ApiResponse<ExchangeRateResponseDto>> refreshRate(
+    @GetMapping("/{corridorId}/current")
+    @Operation(summary = "Get current exchange rate for a corridor")
+    public ResponseEntity<ApiResponse<ExchangeRateResponse>> getCurrent(
             @PathVariable("corridorId") Long corridorId) {
-
-        ExchangeRateResponseDto response =
-                exchangeRateService.refresh(corridorId);
-
         return ResponseEntity.ok(
-                ApiResponse.<ExchangeRateResponseDto>builder()
-                        .success(true)
-                        .message("Exchange rate refreshed successfully")
-                        .data(response)
-                        .build()
-        );
+                ApiResponse.success("Current rate retrieved successfully",
+                        exchangeRateService.getCurrentRate(corridorId)));
     }
 
-    @GetMapping("/agent/exchange-rates/current/{corridorId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
-    public ResponseEntity<ApiResponse<ExchangeRateResponseDto>> getCurrentRate(
+    @GetMapping("/{corridorId}/history")
+    @Operation(summary = "Get exchange rate history for a corridor")
+    public ResponseEntity<ApiResponse<List<ExchangeRateResponse>>> getHistory(
             @PathVariable("corridorId") Long corridorId) {
-
-        ExchangeRateResponseDto response =
-                exchangeRateService.getCurrentRate(corridorId);
-
         return ResponseEntity.ok(
-                ApiResponse.<ExchangeRateResponseDto>builder()
-                        .success(true)
-                        .message("Current exchange rate retrieved successfully")
-                        .data(response)
-                        .build()
-        );
+                ApiResponse.success("Rate history retrieved successfully",
+                        exchangeRateService.getHistory(corridorId)));
     }
 
-    @GetMapping("/admin/exchange-rates/history/{corridorId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<PaginationResponse<ExchangeRateHistoryDto>>> getHistory(
+    @PostMapping("/{corridorId}")
+    @Operation(summary = "Manually update exchange rate for a corridor")
+    public ResponseEntity<ApiResponse<ExchangeRateResponse>> update(
             @PathVariable("corridorId") Long corridorId,
-            @RequestParam(name="page" , defaultValue = "0") int page,
-            @RequestParam(name="size", defaultValue = "10") int size) {
-
-        PaginationResponse<ExchangeRateHistoryDto> result =
-                exchangeRateService.getHistory(corridorId, page, size);
-
+            @Valid @RequestBody UpdateRateRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
-                ApiResponse.<PaginationResponse<ExchangeRateHistoryDto>>builder()
-                        .success(true)
-                        .message("Exchange rate history retrieved successfully")
-                        .data(result)
-                        .build()
-        );
+                ApiResponse.success("Exchange rate updated successfully",
+                        exchangeRateService.updateManually(
+                                corridorId, request, resolveUserId(userDetails))));
+    }
+
+    private Long resolveUserId(UserDetails userDetails) {
+        return userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
     }
 }

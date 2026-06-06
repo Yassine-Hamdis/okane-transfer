@@ -1,188 +1,178 @@
 package com.okanetransfer.service;
 
 import com.okanetransfer.dto.request.CreateCorridorRequest;
-import com.okanetransfer.dto.response.CorridorResponseDto;
-import com.okanetransfer.dto.response.PaginationResponse;
+import com.okanetransfer.dto.response.CorridorResponse;
 import com.okanetransfer.entity.Corridor;
 import com.okanetransfer.entity.Country;
 import com.okanetransfer.entity.Currency;
-import com.okanetransfer.mapper.CorridorMapper;
+import com.okanetransfer.exception.ResourceNotFoundException;
 import com.okanetransfer.repository.CorridorRepository;
 import com.okanetransfer.repository.CountryRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import com.okanetransfer.repository.CurrencyRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CorridorService {
 
-    private final CountryRepository countryRepository;
-    private final CorridorRepository corridorRepository;
+    @Autowired
+    private CorridorRepository corridorRepository;
 
-    public CorridorService(CountryRepository countryRepository, CorridorRepository corridorRepository) {
-        this.countryRepository = countryRepository;
-        this.corridorRepository = corridorRepository;
+    @Autowired
+    private CountryRepository countryRepository;
+
+    @Autowired
+    private CurrencyRepository currencyRepository;
+
+    @Autowired
+    private AuditService auditService;
+
+    @Transactional(readOnly = true)
+    public List<CorridorResponse> getAll() {
+        return corridorRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<CorridorResponse> getActive() {
+        return corridorRepository.findAllByActiveTrue()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public CorridorResponse getById(Long id) {
+        return toResponse(findCorridor(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CorridorResponse> getBySourceCountry(Long countryId) {
+        return corridorRepository.findAllBySourceCountryId(countryId)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CorridorResponse> getByDestinationCountry(Long countryId) {
+        return corridorRepository.findAllByDestinationCountryId(countryId)
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
-    public CorridorResponseDto create(CreateCorridorRequest request) {
-
-        Country source = countryRepository.findById(request.getSourceCountryId())
-                .orElseThrow(() -> new RuntimeException("Source country not found"));
-
-        Country destination = countryRepository.findById(request.getDestinationCountryId())
-                .orElseThrow(() -> new RuntimeException("Destination country not found"));
-
-        if (source.getId().equals(destination.getId())) {
-            throw new RuntimeException("Source and destination cannot be same");
+    public CorridorResponse create(CreateCorridorRequest request, Long adminId) {
+        if (request.getSourceCountryId().equals(request.getDestinationCountryId())) {
+            throw new IllegalArgumentException("Source and destination countries must be different");
         }
 
-        if (corridorRepository.existsBySourceCountryIdAndDestinationCountryId(
-                source.getId(),
-                destination.getId()
-        )) {
-            throw new RuntimeException("Corridor already exists");
+        Country sourceCountry = countryRepository.findById(request.getSourceCountryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Country", request.getSourceCountryId()));
+
+        Country destinationCountry = countryRepository.findById(request.getDestinationCountryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Country", request.getDestinationCountryId()));
+
+        Currency sourceCurrency = currencyRepository.findById(request.getSourceCurrencyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Currency", request.getSourceCurrencyId()));
+
+        Currency destinationCurrency = currencyRepository.findById(request.getDestinationCurrencyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Currency", request.getDestinationCurrencyId()));
+
+        if (!sourceCountry.isActive() || !sourceCountry.isAllowsSending()) {
+            throw new IllegalArgumentException("Source country is not allowed for sending");
         }
 
-        boolean active = canBeActive(source, destination);
+        if (!destinationCountry.isActive() || !destinationCountry.isAllowsReceiving()) {
+            throw new IllegalArgumentException("Destination country is not allowed for receiving");
+        }
+
+        if (!sourceCurrency.isActive()) {
+            throw new IllegalArgumentException("Source currency is inactive");
+        }
+
+        if (!destinationCurrency.isActive()) {
+            throw new IllegalArgumentException("Destination currency is inactive");
+        }
+
+        boolean exists = corridorRepository
+                .existsBySourceCountryIdAndDestinationCountryIdAndSourceCurrencyIdAndDestinationCurrencyId(
+                        sourceCountry.getId(),
+                        destinationCountry.getId(),
+                        sourceCurrency.getId(),
+                        destinationCurrency.getId()
+                );
+
+        if (exists) {
+            throw new IllegalArgumentException("This corridor already exists");
+        }
 
         Corridor corridor = Corridor.builder()
-                .sourceCountry(source)
-                .destinationCountry(destination)
-                .sourceCurrency(source.getDefaultCurrency())
-                .destinationCurrency(destination.getDefaultCurrency())
-                .active(active)
+                .sourceCountry(sourceCountry)
+                .destinationCountry(destinationCountry)
+                .sourceCurrency(sourceCurrency)
+                .destinationCurrency(destinationCurrency)
+                .active(true)
                 .build();
 
         Corridor saved = corridorRepository.save(corridor);
 
-        return CorridorMapper.toDto(saved);
+        auditService.log(adminId, "CORRIDOR_CREATED", "Corridor", saved.getId(),
+                "{\"source\":\"" + sourceCountry.getCode() +
+                        "\",\"destination\":\"" + destinationCountry.getCode() + "\"}");
+
+        return toResponse(saved);
     }
 
     @Transactional
-    public CorridorResponseDto toggleActive(Long id) {
-
-        Corridor corridor = corridorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Corridor not found"));
-
-        Country source = corridor.getSourceCountry();
-        Country destination = corridor.getDestinationCountry();
-        if (!corridor.isActive()) {
-
-            if (!canBeActive(
-                    corridor.getSourceCountry(),
-                    corridor.getDestinationCountry())) {
-
-                throw new RuntimeException(
-                        "Corridor cannot be activated because countries configuration does not allow it"
-                );
-            }
-        }
-
-        // 🔁 bascule état
+    public CorridorResponse toggleActive(Long id, Long adminId) {
+        Corridor corridor = findCorridor(id);
         corridor.setActive(!corridor.isActive());
 
         Corridor saved = corridorRepository.save(corridor);
 
-        return CorridorMapper.toDto(saved);
+        auditService.log(adminId,
+                saved.isActive() ? "CORRIDOR_ACTIVATED" : "CORRIDOR_DEACTIVATED",
+                "Corridor",
+                id,
+                null);
+
+        return toResponse(saved);
     }
 
-    public boolean canBeActive(Country source, Country destination) {
-
-        return source.isActive()
-                && source.isAllowsSending()
-                && destination.isActive()
-                && destination.isAllowsReceiving();
+    private Corridor findCorridor(Long id) {
+        return corridorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Corridor", id));
     }
 
-    @Transactional
-    public void refreshCorridorsByCountry(Long countryId) {
+    private CorridorResponse toResponse(Corridor c) {
+        return CorridorResponse.builder()
+                .id(c.getId())
 
-        List<Corridor> corridors =
-                corridorRepository
-                        .findBySourceCountryIdOrDestinationCountryId(
-                                countryId,
-                                countryId);
+                .sourceCountryId(c.getSourceCountry().getId())
+                .sourceCountryName(c.getSourceCountry().getName())
+                .sourceCountryCode(c.getSourceCountry().getCode())
 
-        for (Corridor corridor : corridors) {
+                .destinationCountryId(c.getDestinationCountry().getId())
+                .destinationCountryName(c.getDestinationCountry().getName())
+                .destinationCountryCode(c.getDestinationCountry().getCode())
 
-            boolean active = canBeActive(
-                    corridor.getSourceCountry(),
-                    corridor.getDestinationCountry());
+                .sourceCurrencyId(c.getSourceCurrency().getId())
+                .sourceCurrencyCode(c.getSourceCurrency().getCode())
 
-            corridor.setActive(active);
-        }
-    }
+                .destinationCurrencyId(c.getDestinationCurrency().getId())
+                .destinationCurrencyCode(c.getDestinationCurrency().getCode())
 
-    @Transactional(readOnly = true)
-    public PaginationResponse<CorridorResponseDto> search(
-            Long sourceCountryId,
-            Long destinationCountryId,
-            Boolean active,
-            int page,
-            int size,
-            String sortBy,
-            String direction) {
-
-        if (page < 0) page = 0;
-        if (size <= 0 || size > 50) size = 10;
-
-        List<String> allowedSorts = List.of("id", "active", "createdAt", "updatedAt");
-
-        if (sortBy == null || !allowedSorts.contains(sortBy)) {
-            sortBy = "id";
-        }
-
-        if (direction == null ||
-                (!direction.equalsIgnoreCase("asc") && !direction.equalsIgnoreCase("desc"))) {
-            direction = "asc";
-        }
-
-        Sort sort = direction.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<Corridor> result = corridorRepository.search(
-                sourceCountryId,
-                destinationCountryId,
-                active,
-                pageable
-        );
-
-        List<CorridorResponseDto> content = result.getContent()
-                .stream()
-                .map(CorridorMapper::toDto)
-                .toList();
-
-        return PaginationResponse.<CorridorResponseDto>builder()
-                .content(content)
-                .page(result.getNumber())
-                .size(result.getSize())
-                .totalElements(result.getTotalElements())
-                .totalPages(result.getTotalPages())
-                .first(result.isFirst())
-                .last(result.isLast())
+                .active(c.isActive())
+                .createdAt(c.getCreatedAt())
+                .updatedAt(c.getUpdatedAt())
                 .build();
-    }
-
-    @Transactional(readOnly = true)
-    public CorridorResponseDto getCorridor(
-            Long sourceCountryId,
-            Long destinationCountryId) {
-
-        Corridor corridor = corridorRepository
-                .findExactCorridor(sourceCountryId, destinationCountryId)
-                .orElseThrow(() ->
-                        new RuntimeException("Corridor not found for this route"));
-
-        return CorridorMapper.toDto(corridor);
     }
 }

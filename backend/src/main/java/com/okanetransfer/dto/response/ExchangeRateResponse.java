@@ -7,24 +7,17 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExchangeRateResponseDto {
-
+@Builder
+public class ExchangeRateResponse {
     private Long id;
-
     private Long corridorId;
-
-    private String sourceCurrency;
-
-    private String destinationCurrency;
-
+    private String corridorLabel;
     private BigDecimal rate;
-
-    private String providerName;
-
+    private String source;
     private boolean current;
-
+    private Long updatedById;
+    private String updatedByEmail;
     private LocalDateTime recordedAt;
 }
