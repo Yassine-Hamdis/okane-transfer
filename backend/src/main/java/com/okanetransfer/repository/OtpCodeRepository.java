@@ -20,6 +20,8 @@ public interface OtpCodeRepository extends JpaRepository<OtpCode, Long> {
     Optional<OtpCode> findTopByTransferIdAndTypeAndUsedFalseAndBlockedFalseAndExpiresAtAfter(
             Long transferId, OtpType type, LocalDateTime now);
 
+    Optional<OtpCode> findTopByUserIdAndTypeOrderByCreatedAtDesc(Long userId, OtpType type);
+
     List<OtpCode> findAllByUserId(Long userId);
     List<OtpCode> findAllByTransferId(Long transferId);
 }
