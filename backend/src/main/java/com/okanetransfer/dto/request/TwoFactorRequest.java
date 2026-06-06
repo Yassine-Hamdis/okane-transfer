@@ -8,12 +8,12 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginRequest {
+public class TwoFactorRequest {
 
     @NotBlank
     @Email
     private String email;
 
     @NotBlank
-    private String password;
+    private String otpCode;
 }

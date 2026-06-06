@@ -82,6 +82,10 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "must_change_password", nullable = false)
+    @Builder.Default
+    private boolean mustChangePassword = false;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

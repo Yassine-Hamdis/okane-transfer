@@ -1,7 +1,9 @@
 package com.okanetransfer.dto.request;
 
+import com.okanetransfer.entity.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -9,7 +11,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegisterRequest {
+public class CreateUserRequest {
 
     @NotBlank
     @Size(max = 100)
@@ -24,10 +26,16 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank
-    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Size(min = 8)
     private String password;
 
     @NotBlank
     @Size(max = 20)
     private String phone;
+
+    @NotNull
+    private Role role;
+
+    // Required for ROLE_AGENT and ROLE_MANAGER
+    private Long agencyId;
 }
