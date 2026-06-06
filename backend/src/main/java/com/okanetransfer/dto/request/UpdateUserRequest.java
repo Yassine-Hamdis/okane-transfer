@@ -1,24 +1,24 @@
 package com.okanetransfer.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UpdateUserRequest {
 
-    @NotBlank private String firstName;
-    @NotBlank private String lastName;
-    @NotBlank private String phone;
+    @NotBlank
+    @Size(max = 100)
+    private String firstName;
 
-    private Long agencyId;
+    @NotBlank
+    @Size(max = 100)
+    private String lastName;
 
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-
-    public Long getAgencyId() { return agencyId; }
-    public void setAgencyId(Long agencyId) { this.agencyId = agencyId; }
+    @NotBlank
+    @Size(max = 20)
+    private String phone;
 }
