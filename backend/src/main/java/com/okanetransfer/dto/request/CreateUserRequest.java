@@ -4,39 +4,38 @@ import com.okanetransfer.entity.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateUserRequest {
 
-    @NotBlank private String firstName;
-    @NotBlank private String lastName;
+    @NotBlank
+    @Size(max = 100)
+    private String firstName;
 
-    @NotBlank @Email private String email;
-    @NotBlank private String password;
+    @NotBlank
+    @Size(max = 100)
+    private String lastName;
 
-    @NotBlank private String phone;
+    @NotBlank
+    @Email
+    private String email;
 
-    @NotNull private Role role;
+    @NotBlank
+    @Size(min = 8)
+    private String password;
 
-    private Long agencyId; // obligatoire si ROLE_AGENT/ROLE_MANAGER
+    @NotBlank
+    @Size(max = 20)
+    private String phone;
 
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
+    @NotNull
+    private Role role;
 
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
-
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
-
-    public Long getAgencyId() { return agencyId; }
-    public void setAgencyId(Long agencyId) { this.agencyId = agencyId; }
+    // Required for ROLE_AGENT and ROLE_MANAGER
+    private Long agencyId;
 }
