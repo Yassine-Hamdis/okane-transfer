@@ -40,7 +40,7 @@ public class MobileMoneyController {
     @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Get mobile money record for a transfer")
     public ResponseEntity<ApiResponse<MobileMoneyResponse>> getByTransfer(
-            @PathVariable Long transferId) {
+            @PathVariable("transferId") Long transferId) {
         return ResponseEntity.ok(
                 ApiResponse.success("Mobile money record retrieved successfully",
                         mobileMoneyService.getByTransfer(transferId)));
@@ -68,7 +68,7 @@ public class MobileMoneyController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Reconcile a mobile money transfer")
     public ResponseEntity<ApiResponse<MobileMoneyResponse>> reconcile(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
                 ApiResponse.success("Mobile money transfer reconciled successfully",

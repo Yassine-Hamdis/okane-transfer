@@ -57,7 +57,7 @@ public class NotificationController {
     @PatchMapping("/{id}/read")
     @Operation(summary = "Mark a notification as read")
     public ResponseEntity<ApiResponse<Void>> markAsRead(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
         notificationService.markAsRead(id, resolveUserId(userDetails));
         return ResponseEntity.ok(

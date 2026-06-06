@@ -34,7 +34,7 @@ public class AuditController {
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get audit logs for a specific user")
     public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getByUser(
-            @PathVariable Long userId) {
+            @PathVariable("userId") Long userId) {
         return ResponseEntity.ok(
                 ApiResponse.success("Audit logs retrieved successfully",
                         auditService.getByUser(userId)));
@@ -43,8 +43,8 @@ public class AuditController {
     @GetMapping("/entity/{entityType}/{entityId}")
     @Operation(summary = "Get audit logs for a specific entity")
     public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getByEntity(
-            @PathVariable String entityType,
-            @PathVariable Long entityId) {
+            @PathVariable("entityType") String entityType,
+            @PathVariable("entityId") Long entityId) {
         return ResponseEntity.ok(
                 ApiResponse.success("Audit logs retrieved successfully",
                         auditService.getByEntity(entityType, entityId)));
@@ -65,7 +65,7 @@ public class AuditController {
     @GetMapping("/action/{action}")
     @Operation(summary = "Get audit logs by action type")
     public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getByAction(
-            @PathVariable String action) {
+            @PathVariable("action") String action) {
         return ResponseEntity.ok(
                 ApiResponse.success("Audit logs retrieved successfully",
                         auditService.getByAction(action)));

@@ -55,7 +55,7 @@ public class TransferController {
     @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Get transfer by ID")
     public ResponseEntity<ApiResponse<TransferResponse>> getById(
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
         return ResponseEntity.ok(
                 ApiResponse.success("Transfer retrieved successfully",
                         transferService.getById(id)));
@@ -65,7 +65,7 @@ public class TransferController {
     @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Get transfer by withdrawal code")
     public ResponseEntity<ApiResponse<TransferResponse>> getByCode(
-            @PathVariable String code) {
+            @PathVariable("code") String code) {
         return ResponseEntity.ok(
                 ApiResponse.success("Transfer retrieved successfully",
                         transferService.getByWithdrawalCode(code)));
@@ -96,7 +96,7 @@ public class TransferController {
     @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Cancel a transfer")
     public ResponseEntity<ApiResponse<TransferResponse>> cancel(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody CancelTransferRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
@@ -118,7 +118,7 @@ public class TransferController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get transfers by status")
     public ResponseEntity<ApiResponse<List<TransferResponse>>> getByStatus(
-            @PathVariable TransferStatus status) {
+            @PathVariable("status") TransferStatus status) {
         return ResponseEntity.ok(
                 ApiResponse.success("Transfers retrieved successfully",
                         transferService.getByStatus(status)));
@@ -128,7 +128,7 @@ public class TransferController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Approve a blocked transfer")
     public ResponseEntity<ApiResponse<TransferResponse>> approve(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
                 ApiResponse.success("Transfer approved successfully",

@@ -54,7 +54,7 @@ public class ChatbotController {
     @GetMapping("/{sessionId}/messages")
     @Operation(summary = "Get all messages in a conversation")
     public ResponseEntity<ApiResponse<List<ChatbotMessage>>> getMessages(
-            @PathVariable String sessionId) {
+            @PathVariable("sessionId") String sessionId) {
         return ResponseEntity.ok(
                 ApiResponse.success("Messages retrieved successfully",
                         chatbotService.getMessages(sessionId)));
@@ -63,7 +63,7 @@ public class ChatbotController {
     @PatchMapping("/{sessionId}/close")
     @Operation(summary = "Close a conversation")
     public ResponseEntity<ApiResponse<Void>> close(
-            @PathVariable String sessionId) {
+            @PathVariable("sessionId") String sessionId) {
         chatbotService.closeConversation(sessionId);
         return ResponseEntity.ok(
                 ApiResponse.success("Conversation closed successfully"));

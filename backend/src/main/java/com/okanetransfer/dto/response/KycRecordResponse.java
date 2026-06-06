@@ -2,6 +2,7 @@ package com.okanetransfer.dto.response;
 
 import com.okanetransfer.entity.enums.KycStatus;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Getter

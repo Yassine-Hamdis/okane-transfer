@@ -85,7 +85,7 @@ public class ClientController {
     @Operation(summary = "Get a specific transfer by ID")
     public ResponseEntity<ApiResponse<TransferSummaryResponse>> getTransferById(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
         return ResponseEntity.ok(
                 ApiResponse.success("Transfer retrieved successfully",
                         clientService.getMyTransferById(
@@ -95,7 +95,7 @@ public class ClientController {
     @GetMapping("/transfers/track/{code}")
     @Operation(summary = "Track a transfer by withdrawal code")
     public ResponseEntity<ApiResponse<TransferTrackResponse>> track(
-            @PathVariable String code) {
+            @PathVariable("code") String code) {
         return ResponseEntity.ok(
                 ApiResponse.success("Transfer found",
                         clientService.trackTransfer(code)));

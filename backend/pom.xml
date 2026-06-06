@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.okanetransfer</groupId>
   <artifactId>backend</artifactId>
@@ -127,11 +127,24 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!-- ==================== SPRINGDOC OPENAPI (SWAGGER) ==================== -->
+    <!--    &lt;!&ndash; ==================== SPRINGDOC OPENAPI (SWAGGER) ==================== &ndash;&gt;-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.springdoc</groupId>-->
+    <!--      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>-->
+    <!--      <version>${springdoc.version}</version>-->
+    <!--    </dependency>-->
+
+    <!-- Remove springdoc completely -->
+    <!-- Add these instead -->
+    <!--    <dependency>-->
+    <!--      <groupId>io.swagger.core.v3</groupId>-->
+    <!--      <artifactId>swagger-jaxrs2-jakarta</artifactId>-->
+    <!--      <version>2.2.20</version>-->
+    <!--    </dependency>-->
     <dependency>
-      <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-      <version>${springdoc.version}</version>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-integration-jakarta</artifactId>
+      <version>2.2.20</version>
     </dependency>
 
     <!-- ==================== JACKSON ==================== -->
@@ -187,18 +200,6 @@
       <artifactId>lombok</artifactId>
       <version>1.18.32</version>
       <scope>provided</scope>
-    </dependency>
-    <!-- ==================== ITEXT ==================== -->
-    <dependency>
-      <groupId>com.itextpdf</groupId>
-      <artifactId>itext-core</artifactId>
-      <version>8.0.4</version> <type>pom</type>
-    </dependency>
-    <!-- ==================== COMMONS CSV ==================== -->
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-csv</artifactId>
-      <version>1.10.0</version>
     </dependency>
 
     <!-- Brevo (Sendinblue) Java SDK -->

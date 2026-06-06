@@ -7,7 +7,6 @@ import com.okanetransfer.dto.response.TransferSummaryResponse;
 import com.okanetransfer.dto.response.TransferTrackResponse;
 import com.okanetransfer.entity.Transfer;
 import com.okanetransfer.entity.User;
-import com.okanetransfer.entity.enums.TransferStatus;
 import com.okanetransfer.exception.ResourceNotFoundException;
 import com.okanetransfer.repository.TransferRepository;
 import com.okanetransfer.repository.UserRepository;

@@ -1,6 +1,7 @@
 package com.okanetransfer.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,8 +11,17 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CancelTransferRequest {
+public class UpdateUserRequest {
 
     @NotBlank
-    private String reason;
+    @Size(max = 100)
+    private String firstName;
+
+    @NotBlank
+    @Size(max = 100)
+    private String lastName;
+
+    @NotBlank
+    @Size(max = 20)
+    private String phone;
 }

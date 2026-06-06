@@ -1,5 +1,6 @@
 package com.okanetransfer.dto.request;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,8 +11,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CancelTransferRequest {
+public class TwoFactorRequest {
 
     @NotBlank
-    private String reason;
+    @Email
+    private String email;
+
+    @NotBlank
+    private String otpCode;
 }

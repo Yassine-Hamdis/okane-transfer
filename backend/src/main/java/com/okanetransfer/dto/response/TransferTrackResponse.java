@@ -3,6 +3,7 @@ package com.okanetransfer.dto.response;
 import com.okanetransfer.entity.enums.TransferStatus;
 import com.okanetransfer.entity.enums.TransferType;
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 

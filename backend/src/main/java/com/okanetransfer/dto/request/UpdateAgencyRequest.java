@@ -1,27 +1,35 @@
 package com.okanetransfer.dto.request;
 
-import com.okanetransfer.entity.enums.MobileOperator;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateMobileMoneyRequest {
-
-    @NotNull
-    private Long transferId;
-
-    @NotNull
-    private MobileOperator operator;
+public class UpdateAgencyRequest {
 
     @NotBlank
-    @Size(max = 20)
-    private String walletPhone;
+    @Size(max = 100)
+    private String name;
+
+    @NotBlank
+    @Size(max = 255)
+    private String address;
+
+    @NotBlank
+    @Size(max = 100)
+    private String city;
+
+    @NotNull
+    @Positive
+    private BigDecimal dailyLimit;
 }
