@@ -1,0 +1,14 @@
+package com.okanetransfer.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class CancelTransferRequest {
+
+    @NotBlank
+    private String reason;
+}
