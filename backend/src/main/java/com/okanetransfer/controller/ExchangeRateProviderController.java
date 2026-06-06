@@ -35,7 +35,7 @@ public class ExchangeRateProviderController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ExchangeRateProviderResponseDto> update(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody UpdateExchangeRateProviderRequest request) {
 
         return ResponseEntity.ok(
@@ -46,7 +46,7 @@ public class ExchangeRateProviderController {
     @PatchMapping("/{id}/activate")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ExchangeRateProviderResponseDto> activate(
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
 
         return ResponseEntity.ok(
                 service.activate(id)

@@ -18,7 +18,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/fee-grids")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class FeeGridController {
 

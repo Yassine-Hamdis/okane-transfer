@@ -41,7 +41,7 @@ public class CountryController {
     @PutMapping("/admin/countries/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CountryResponseDto>> updateCountry(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody UpdateCountryRequest request) {
 
         CountryResponseDto country = countryService.update(id, request);
@@ -58,7 +58,7 @@ public class CountryController {
     @PatchMapping("/admin/countries/{id}/toggle-active")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CountryResponseDto>> toggleActive(
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
 
         CountryResponseDto country = countryService.toggleActive(id);
 
@@ -74,7 +74,7 @@ public class CountryController {
     @PatchMapping("/admin/countries/{id}/toggle-sending")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CountryResponseDto>> toggleSending(
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
 
         CountryResponseDto country = countryService.toggleSending(id);
 
@@ -90,7 +90,7 @@ public class CountryController {
     @PatchMapping("/admin/countries/{id}/toggle-receiving")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CountryResponseDto>> toggleReceiving(
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
 
         CountryResponseDto country = countryService.toggleReceiving(id);
 
@@ -107,14 +107,14 @@ public class CountryController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PaginationResponse<CountryResponseDto>>> searchCountries(
 
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) String keyword,
+            @RequestParam(name="active" , required = false) Boolean active,
+            @RequestParam(name="keyword" , required = false) String keyword,
 
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(name="page" , defaultValue = "0") int page,
+            @RequestParam(name="size" , defaultValue = "10") int size,
 
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(name="sortBy" , defaultValue = "id") String sortBy,
+            @RequestParam(name="direction" , defaultValue = "asc") String direction) {
 
         PaginationResponse<CountryResponseDto> result =
                 countryService.search(
@@ -136,7 +136,7 @@ public class CountryController {
 
     @GetMapping("/countries/lookup")
     public ResponseEntity<List<CountryLookupDto>> lookup(
-            @RequestParam String keyword) {
+            @RequestParam("keyword") String keyword) {
 
         return ResponseEntity.ok(countryService.searchLookup(keyword));
     }

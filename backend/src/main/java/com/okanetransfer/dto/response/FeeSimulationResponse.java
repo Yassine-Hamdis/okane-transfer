@@ -12,12 +12,13 @@ import java.math.BigDecimal;
 public class FeeSimulationResponse {
 
     // INPUT
-    private BigDecimal clientAmount;
-    private String clientCurrency;
+    private BigDecimal testAmount;
+    private String testCurrency;
 
     // FX
-    private BigDecimal exchangeRate;
-    private BigDecimal amountInAgencyCurrency;
+    private BigDecimal exchangeRateToSource;
+    private BigDecimal exchangeRateToDestination;
+    private BigDecimal amountInSourceCurrency;
 
     private String agencyCurrency;
     private String destinationCurrency;
@@ -32,5 +33,6 @@ public class FeeSimulationResponse {
 
     // FINAL
     private BigDecimal totalPaidByClient;
-    private BigDecimal amountReceived;
+    private BigDecimal netSourceAmount;
+    private BigDecimal amountDestination;
 }

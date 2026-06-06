@@ -18,8 +18,8 @@ public class FrankfurterClient implements ExchangeRateProviderClient {
     public BigDecimal getRate(String from, String to, ExchangeRateProvider provider) {
 
         String url = provider.getBaseUrl()
-                + "?from=" + from
-                + "&to=" + to;
+                + "/" + from
+                + "/" + to;
 
         FrankfurterResponse response =
                 restTemplate.getForObject(url, FrankfurterResponse.class);

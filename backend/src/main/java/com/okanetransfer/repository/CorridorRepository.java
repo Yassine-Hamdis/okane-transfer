@@ -68,8 +68,8 @@ public interface CorridorRepository extends JpaRepository<Corridor, Long> {
     AND dc.id = :destinationCountryId
 """)
     Optional<Corridor> findExactCorridor(
-            Long sourceCountryId,
-            Long destinationCountryId
+            @Param("sourceCountryId")Long sourceCountryId,
+            @Param("destinationCountryId")Long destinationCountryId
     );
 
 }

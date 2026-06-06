@@ -40,7 +40,7 @@ public class CorridorController {
     @PatchMapping("/admin/corridors/{id}/toggle-active")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CorridorResponseDto>> toggleActive(
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
 
         CorridorResponseDto corridor = corridorService.toggleActive(id);
 
@@ -58,15 +58,15 @@ public class CorridorController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PaginationResponse<CorridorResponseDto>>> search(
 
-            @RequestParam(required = false) Long sourceCountryId,
-            @RequestParam(required = false) Long destinationCountryId,
-            @RequestParam(required = false) Boolean active,
+            @RequestParam(name="sourceCountryId", required = false) Long sourceCountryId,
+            @RequestParam(name="destinationCountryId", required = false) Long destinationCountryId,
+            @RequestParam(name="active", required = false) Boolean active,
 
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(name="page", defaultValue = "0") int page,
+            @RequestParam(name="size", defaultValue = "10") int size,
 
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(name="sortBy", defaultValue = "id") String sortBy,
+            @RequestParam(name="direction", defaultValue = "asc") String direction) {
 
         PaginationResponse<CorridorResponseDto> result =
                 corridorService.search(
@@ -89,11 +89,11 @@ public class CorridorController {
     }
     //search corridor by destination country id pour agent
 
-        @GetMapping("/agent/destination/{countryId}")
+        @GetMapping("/agent/corridor")
         @PreAuthorize("hasRole('AGENT') or hasRole('ADMIN')")
         public ResponseEntity<ApiResponse<CorridorResponseDto>> getCorridor(
-                @RequestParam Long sourceCountryId,
-                @RequestParam Long destinationCountryId) {
+                @RequestParam("sourceCountryId") Long sourceCountryId,
+                @RequestParam("destinationCountryId") Long destinationCountryId) {
 
             CorridorResponseDto corridor =
                     corridorService.getCorridor(sourceCountryId, destinationCountryId);

@@ -19,7 +19,5 @@ public class ExchangeRateProviderResponseDto {
 
     private boolean active;
 
-    private boolean enabled;
-
     private String description;
 }

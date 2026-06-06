@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -264,24 +265,46 @@ public class FeeService {
 
         List<String> warnings = new ArrayList<>();
 
-        // 1. FX rate
-        BigDecimal rate = exchangeRateRepository
+        // =========================================================
+        // 1. FX : testCurrency → SourceCurrency
+        // =========================================================
+        BigDecimal rateToSource;
+        String sourceCurrencyCode = corridor.getSourceCurrency().getCode();
+
+        // Sécurité : Si le client teste avec la devise source du corridor, le taux est de 1
+        if (request.getTestCurrency().equalsIgnoreCase(sourceCurrencyCode)) {
+            rateToSource = BigDecimal.ONE;
+        } else {
+            rateToSource = exchangeRateRepository
+                    .findCurrentRateByCurrencyCodes(
+                            request.getTestCurrency(),
+                            sourceCurrencyCode
+                    )
+                    .orElseThrow(() -> new RuntimeException("FX testCurrency → source not found"))
+                    .getRate();
+        }
+
+        BigDecimal amountInSource =
+                request.getTestAmount().multiply(rateToSource);
+
+        // =========================================================
+        // 2. FX : SourceCurrency → DestinationCurrency
+        // =========================================================
+        BigDecimal rateSourceToDestination = exchangeRateRepository
                 .findByCorridorIdAndIsCurrentTrue(corridor.getId())
-                .orElseThrow()
+                .orElseThrow(() -> new RuntimeException("FX corridor not found"))
                 .getRate();
 
-        BigDecimal amountAgency =
-                request.getTestAmount().multiply(rate);
-
-        // 2. existing grids (IMPORTANT)
-        List<FeeGrid> existing =
+        // =========================================================
+        // 3. FeeGrid context (validation only, no save)
+        // =========================================================
+        List<FeeGrid> existingGrids =
                 feeGridRepository.findByCorridorIdAndTransferTypeAndActiveTrueOrderByMinAmountAsc(
                         corridor.getId(),
                         request.getTransferType()
                 );
 
-        // 3. build temp grid
-        FeeGrid temp = FeeGrid.builder()
+        FeeGrid tempGrid = FeeGrid.builder()
                 .corridor(corridor)
                 .transferType(request.getTransferType())
                 .minAmount(request.getMinAmount())
@@ -292,43 +315,81 @@ public class FeeService {
                 .centralSharePercent(request.getCentralSharePercent())
                 .build();
 
-        // 4. VALIDATION (NO SAVE)
-        validateFeeGridRules(temp, existing);
+        validateFeeGridRules(tempGrid, existingGrids);
 
-        // 5. FEES
-        BigDecimal feeFixed = Optional.ofNullable(temp.getFeeFixedAmount())
-                .orElse(BigDecimal.ZERO);
+        // =========================================================
+        // 4. find applicable tier (or simulate)
+        // =========================================================
+        FeeGrid appliedGrid = existingGrids.stream()
+                .filter(g ->
+                        amountInSource.compareTo(g.getMinAmount()) >= 0 &&
+                                amountInSource.compareTo(g.getMaxAmount()) < 0
+                )
+                .findFirst()
+                .orElse(tempGrid);
 
-        BigDecimal feePercent =
-                amountAgency.multiply(temp.getFeePercentage())
-                        .divide(BigDecimal.valueOf(100));
+        // =========================================================
+        // 5. FEES CALCULATION (BASED ON SOURCE CURRENCY)
+        // =========================================================
+        BigDecimal feeFixed =
+                Optional.ofNullable(appliedGrid.getFeeFixedAmount())
+                        .orElse(BigDecimal.ZERO);
 
-        BigDecimal totalFee = feeFixed.add(feePercent);
+        // Sécurité : Ajout de RoundingMode.HALF_UP pour éviter les ArithmeticException
+        BigDecimal feePercentage =
+                Optional.ofNullable(appliedGrid.getFeePercentage())
+                        .orElse(BigDecimal.ZERO)
+                        .multiply(amountInSource)
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
+        BigDecimal totalFee = feeFixed.add(feePercentage);
 
         BigDecimal agencyShare =
-                totalFee.multiply(BigDecimal.valueOf(temp.getAgencySharePercent()))
-                        .divide(BigDecimal.valueOf(100));
+                totalFee.multiply(BigDecimal.valueOf(appliedGrid.getAgencySharePercent()))
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
         BigDecimal centralShare =
-                totalFee.multiply(BigDecimal.valueOf(temp.getCentralSharePercent()))
-                        .divide(BigDecimal.valueOf(100));
+                totalFee.multiply(BigDecimal.valueOf(appliedGrid.getCentralSharePercent()))
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
-        // 6. RESPONSE
-        FeeSimulationResponse simulation =
-                FeeSimulationResponse.builder()
-                        .clientAmount(request.getTestAmount())
-                        .exchangeRate(rate)
-                        .amountInAgencyCurrency(amountAgency)
-                        .feeFixed(feeFixed)
-                        .feePercentageValue(feePercent)
-                        .totalFee(totalFee)
-                        .agencyShare(agencyShare)
-                        .centralShare(centralShare)
-                        .build();
+        // =========================================================
+        // 6. NET AMOUNT (SOURCE CURRENCY)
+        // =========================================================
+        // Logique "Frais Inclus" : les frais sont déduits de la somme convertie
+        BigDecimal netSourceAmount = amountInSource.subtract(totalFee);
+
+        // =========================================================
+        // 7. FINAL AMOUNT (DESTINATION CURRENCY)
+        // =========================================================
+        BigDecimal amountDestination =
+                netSourceAmount.multiply(rateSourceToDestination);
+
+        // =========================================================
+        // 8. RESPONSE
+        // =========================================================
+        FeeSimulationResponse simulation = FeeSimulationResponse.builder()
+                .testCurrency(request.getTestCurrency())
+                .testAmount(request.getTestAmount())
+
+                .amountInSourceCurrency(amountInSource)
+
+                .exchangeRateToSource(rateToSource)
+                .exchangeRateToDestination(rateSourceToDestination)
+
+                .feeFixed(feeFixed)
+                .feePercentageValue(feePercentage)
+                .totalFee(totalFee)
+
+                .agencyShare(agencyShare)
+                .centralShare(centralShare)
+
+                .netSourceAmount(netSourceAmount)
+                .amountDestination(amountDestination)
+                .build();
 
         return FeeGridProposalResponse.builder()
                 .simulation(simulation)
-                .valid(true)
+                .valid(warnings.isEmpty())
                 .warnings(warnings)
                 .build();
     }

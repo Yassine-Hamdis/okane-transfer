@@ -28,7 +28,7 @@ public class CurrencyController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/currencies/{id}")
     public ResponseEntity<Currency> updateCurrency(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Currency currency) {
 
         Currency updated = currencyService.updateCurrency(id, currency);
@@ -37,7 +37,7 @@ public class CurrencyController {
 
     @PutMapping("/admin/currencies/{id}/toggle-status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CurrencyResponseDto>> toggleStatus(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<CurrencyResponseDto>> toggleStatus(@PathVariable("id") Long id) {
 
         CurrencyResponseDto response = currencyService.toggleActive(id);
 
@@ -54,14 +54,14 @@ public class CurrencyController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'AGENT')")
     public ResponseEntity<ApiResponse<PaginationResponse<CurrencyResponseDto>>> searchCurrencies(
 
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) String keyword,
+            @RequestParam(name = "active",required = false) Boolean active,
+            @RequestParam(name = "keyword",required = false) String keyword,
 
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(name = "page",defaultValue = "0") int page,
+            @RequestParam(name = "size",defaultValue = "10") int size,
 
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String direction) {
+            @RequestParam(name = "sortBy",defaultValue = "id") String sortBy,
+            @RequestParam(name = "direction",defaultValue = "asc") String direction) {
 
         PaginationResponse<CurrencyResponseDto> result =
                 currencyService.search(
