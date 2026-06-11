@@ -53,9 +53,9 @@ public class AuditController {
     @GetMapping("/range")
     @Operation(summary = "Get audit logs within a date range")
     public ResponseEntity<ApiResponse<List<AuditLogResponse>>> getByRange(
-            @RequestParam
+            @RequestParam("from")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam
+            @RequestParam("to")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         return ResponseEntity.ok(
                 ApiResponse.success("Audit logs retrieved successfully",
