@@ -1,5 +1,6 @@
 package com.okanetransfer.controller;
 
+import com.okanetransfer.dto.request.AssignManagerToAgencyRequest;
 import com.okanetransfer.dto.request.CreateAgencyRequest;
 import com.okanetransfer.dto.request.UpdateAgencyRequest;
 import com.okanetransfer.dto.response.AgencyResponse;
@@ -87,10 +88,10 @@ public class AgencyController {
     @Operation(summary = "Assign a manager to an agency")
     public ResponseEntity<ApiResponse<AgencyResponse>> assignManager(
             @PathVariable("id") Long id,
-            @RequestBody Map<String, Long> body,
+            @RequestBody AssignManagerToAgencyRequest body,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        Long managerId = body.get("managerId");
+        Long managerId = body.getManagerId();
         if (managerId == null) {
             throw new IllegalArgumentException("managerId is required");
         }

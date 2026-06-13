@@ -1,5 +1,6 @@
 package com.okanetransfer.controller;
 
+import com.okanetransfer.dto.request.ChangePasswordRequest;
 import com.okanetransfer.dto.request.CreateUserRequest;
 import com.okanetransfer.dto.request.UpdateUserRequest;
 import com.okanetransfer.dto.response.ApiResponse;
@@ -107,10 +108,10 @@ public class UserController {
     @Operation(summary = "Reset a user's password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @PathVariable("id") Long id,
-            @RequestBody Map<String, String> body,
+            @RequestBody ChangePasswordRequest body,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        String newPassword = body.get("newPassword");
+        String newPassword = body.getNewPassword();
         if (newPassword == null || newPassword.isBlank()) {
             throw new IllegalArgumentException("newPassword is required");
         }
