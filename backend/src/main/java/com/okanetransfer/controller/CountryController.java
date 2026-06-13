@@ -20,7 +20,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/countries")
-@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 @Tag(name = "Countries", description = "Country management")
 public class CountryController {
 
@@ -28,6 +27,7 @@ public class CountryController {
     @Autowired private UserRepository userRepository;
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_AGENT')")
     @Operation(summary = "Get all countries")
     public ResponseEntity<ApiResponse<List<CountryResponse>>> getAll() {
         return ResponseEntity.ok(
@@ -36,6 +36,7 @@ public class CountryController {
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_AGENT')")
     @Operation(summary = "Get active countries")
     public ResponseEntity<ApiResponse<List<CountryResponse>>> getActive() {
         return ResponseEntity.ok(
@@ -44,6 +45,7 @@ public class CountryController {
     }
 
     @GetMapping("/sending")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get countries allowed for sending")
     public ResponseEntity<ApiResponse<List<CountryResponse>>> getSending() {
         return ResponseEntity.ok(
@@ -52,6 +54,7 @@ public class CountryController {
     }
 
     @GetMapping("/receiving")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get countries allowed for receiving")
     public ResponseEntity<ApiResponse<List<CountryResponse>>> getReceiving() {
         return ResponseEntity.ok(
@@ -60,6 +63,7 @@ public class CountryController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get country by ID")
     public ResponseEntity<ApiResponse<CountryResponse>> getById(
             @PathVariable("id") Long id) {

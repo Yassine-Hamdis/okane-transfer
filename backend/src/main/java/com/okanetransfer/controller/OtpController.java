@@ -70,7 +70,7 @@ public class OtpController {
     @Operation(summary = "Generate a withdrawal OTP for a transfer",
             description = "Agent calls this before payout. Code is given to the recipient.")
     public ResponseEntity<ApiResponse<Map<String, String>>> generateWithdrawal(
-            @PathVariable Long transferId) {
+            @PathVariable("transferId") Long transferId) {
 
         String code = otpService.generateForTransfer(transferId);
         return ResponseEntity.ok(
@@ -86,7 +86,7 @@ public class OtpController {
     @Operation(summary = "Verify a withdrawal OTP",
             description = "Agent verifies the code presented by the recipient before paying out.")
     public ResponseEntity<ApiResponse<Void>> verifyWithdrawal(
-            @PathVariable Long transferId,
+            @PathVariable("transferId") Long transferId,
             @Valid @RequestBody OtpVerifyRequest request) {
 
         boolean valid = otpService.verifyForTransfer(transferId, request.getCode());

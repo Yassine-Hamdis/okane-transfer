@@ -250,18 +250,17 @@ public class ChatbotService {
      */
     private MessageIntent detectIntent(String message) {
         String lower = message.toLowerCase();
+        log.info("Detecting intent for message: '{}'", message);
 
         boolean isTracking = TRACKING_KEYWORDS.stream()
                 .anyMatch(lower::contains);
-
-        // Also check for 8-char code pattern e.g. "A3F7K9P2"
         boolean hasWithdrawalCode = message.matches(".*\\b[A-Z0-9]{8}\\b.*");
 
-        if (isTracking || hasWithdrawalCode) {
-            return MessageIntent.TRACKING;
-        }
+        MessageIntent intent = (isTracking || hasWithdrawalCode) ?
+                MessageIntent.TRACKING : MessageIntent.FAQ;
 
-        return MessageIntent.FAQ;
+        log.info("Detected intent: {}", intent);
+        return intent;
     }
 
     // ─────────────────────────────────────────────────────

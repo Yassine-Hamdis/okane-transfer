@@ -19,7 +19,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/corridors")
-@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 @Tag(name = "Corridors", description = "Transfer corridor management")
 public class CorridorController {
 
@@ -27,6 +26,7 @@ public class CorridorController {
     @Autowired private UserRepository  userRepository;
 
     @GetMapping
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_AGENT')")
     @Operation(summary = "Get all corridors")
     public ResponseEntity<ApiResponse<List<CorridorResponse>>> getAll() {
         return ResponseEntity.ok(
@@ -35,6 +35,7 @@ public class CorridorController {
     }
 
     @GetMapping("/active")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_AGENT')")
     @Operation(summary = "Get active corridors")
     public ResponseEntity<ApiResponse<List<CorridorResponse>>> getActive() {
         return ResponseEntity.ok(
@@ -43,6 +44,7 @@ public class CorridorController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get corridor by ID")
     public ResponseEntity<ApiResponse<CorridorResponse>> getById(
             @PathVariable("id") Long id) {
@@ -52,6 +54,7 @@ public class CorridorController {
     }
 
     @GetMapping("/source/{countryId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get corridors by source country")
     public ResponseEntity<ApiResponse<List<CorridorResponse>>> getBySource(
             @PathVariable("countryId") Long countryId) {
@@ -61,6 +64,7 @@ public class CorridorController {
     }
 
     @GetMapping("/destination/{countryId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Get corridors by destination country")
     public ResponseEntity<ApiResponse<List<CorridorResponse>>> getByDestination(
             @PathVariable("countryId") Long countryId) {

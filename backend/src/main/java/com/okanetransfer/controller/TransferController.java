@@ -86,7 +86,7 @@ public class TransferController {
     @PreAuthorize("hasAnyAuthority('ROLE_AGENT','ROLE_MANAGER','ROLE_ADMIN')")
     @Operation(summary = "Search transfers by recipient phone")
     public ResponseEntity<ApiResponse<List<TransferResponse>>> searchByPhone(
-            @RequestParam String phone) {
+            @RequestParam("phone") String phone) {
         return ResponseEntity.ok(
                 ApiResponse.success("Transfers retrieved successfully",
                         transferService.searchByRecipientPhone(phone)));
