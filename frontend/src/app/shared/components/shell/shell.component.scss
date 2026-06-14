@@ -1,0 +1,19 @@
+.shell-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--okane-bg);
+}
+
+.shell-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; // prevent flex overflow
+  transition: margin-left 0.25s ease;
+}
+
+.shell-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}

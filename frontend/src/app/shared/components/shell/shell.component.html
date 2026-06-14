@@ -1,0 +1,25 @@
+<div class="shell-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <app-sidebar
+    [collapsed]="sidebarCollapsed"
+    (toggleCollapse)="onToggleSidebar()">
+  </app-sidebar>
+
+  <!-- ── Main content area ─────────────────────────────────────────────── -->
+  <div class="shell-main" [class.sidebar-collapsed]="sidebarCollapsed">
+
+    <!-- Sticky navbar at top -->
+    <app-navbar
+      [sidebarCollapsed]="sidebarCollapsed"
+      (toggleSidebar)="onToggleSidebar()">
+    </app-navbar>
+
+    <!-- Routed page content -->
+    <main class="shell-content">
+      <router-outlet />
+    </main>
+
+  </div>
+
+</div>
