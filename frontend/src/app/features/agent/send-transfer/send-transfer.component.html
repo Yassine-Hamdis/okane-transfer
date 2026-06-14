@@ -1,0 +1,398 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <h1>Send Transfer</h1>
+  </div>
+
+  <!-- ── SUCCESS SCREEN ──────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="createdTransfer">
+    <mat-card class="success-card">
+      <div class="success-header">
+        <div class="success-icon">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <h2>Transfer Created!</h2>
+        <p>Share the withdrawal code with the recipient</p>
+      </div>
+
+      <!-- Withdrawal code (large, printable) -->
+      <div class="withdrawal-code-box">
+        <span class="wc-label">WITHDRAWAL CODE</span>
+        <span class="wc-code">{{ createdTransfer.withdrawalCode }}</span>
+      </div>
+
+      <!-- Transfer breakdown -->
+      <div class="transfer-breakdown">
+        <div class="breakdown-row">
+          <span>Sender</span>
+          <strong>{{ createdTransfer.senderFullName }}</strong>
+        </div>
+        <div class="breakdown-row">
+          <span>Recipient</span>
+          <strong>{{ createdTransfer.recipientFullName }}</strong>
+        </div>
+        <mat-divider />
+        <div class="breakdown-row">
+          <span>Amount Sent</span>
+          <strong>{{ createdTransfer.sentAmount | currencyFormat:createdTransfer.sentCurrency }}</strong>
+        </div>
+        <div class="breakdown-row">
+          <span>Fees</span>
+          <strong>{{ createdTransfer.feeAmount | currencyFormat:createdTransfer.sentCurrency }}</strong>
+        </div>
+        <div class="breakdown-row">
+          <span>Exchange Rate</span>
+          <strong>1 {{ createdTransfer.sentCurrency }} = {{ createdTransfer.exchangeRate }} {{ createdTransfer.receivedCurrency }}</strong>
+        </div>
+        <div class="breakdown-row total">
+          <span>Recipient Receives</span>
+          <strong class="receive-amount">
+            {{ createdTransfer.receivedAmount | currencyFormat:createdTransfer.receivedCurrency }}
+          </strong>
+        </div>
+        <div class="breakdown-row">
+          <span>Expires At</span>
+          <strong>{{ createdTransfer.expiresAt | date:'medium' }}</strong>
+        </div>
+      </div>
+
+      <div class="success-actions">
+        <button mat-stroked-button (click)="reset()">
+          <mat-icon>add</mat-icon> New Transfer
+        </button>
+        <button mat-flat-button color="primary" onclick="window.print()">
+          <mat-icon>print</mat-icon> Print Receipt
+        </button>
+      </div>
+    </mat-card>
+  </ng-container>
+
+  <!-- ── STEPPER ──────────────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!createdTransfer">
+    <mat-stepper linear #stepper orientation="horizontal" class="transfer-stepper">
+
+      <!-- ── STEP 1: Corridor & Amount ──────────────────────────────────────── -->
+      <mat-step [stepControl]="corridorForm" label="Corridor & Amount">
+        <form [formGroup]="corridorForm">
+
+          <div class="step-content">
+
+            <!-- Corridor selector -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Transfer Corridor</mat-label>
+              <mat-select formControlName="corridorId">
+                <mat-option *ngFor="let c of corridors" [value]="c.id">
+                  {{ getCorridorLabel(c) }}
+                </mat-option>
+              </mat-select>
+              <mat-icon matPrefix>alt_route</mat-icon>
+              <mat-error>Please select a corridor</mat-error>
+            </mat-form-field>
+
+            <!-- Transfer type -->
+            <div class="type-selector">
+              <label class="type-label">Transfer Type</label>
+              <mat-radio-group formControlName="transferType" class="type-group">
+                <mat-card class="type-card"
+                          *ngFor="let t of transferTypes"
+                          [class.selected]="corridorForm.value.transferType === t.value"
+                          (click)="corridorForm.patchValue({ transferType: t.value })">
+                  <mat-radio-button [value]="t.value" />
+                  <mat-icon>{{ t.icon }}</mat-icon>
+                  <span>{{ t.label }}</span>
+                </mat-card>
+              </mat-radio-group>
+            </div>
+
+            <!-- Amount -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>
+                Amount to Send
+                <ng-container *ngIf="selectedCorridor">
+                  ({{ selectedCorridor.sourceCurrencyCode }})
+                </ng-container>
+              </mat-label>
+              <input matInput
+                     type="number"
+                     formControlName="sentAmount"
+                     min="1"
+                     placeholder="0.00" />
+              <mat-icon matPrefix>attach_money</mat-icon>
+              <mat-error>Valid amount required</mat-error>
+            </mat-form-field>
+
+            <!-- Fee simulation result -->
+            <div class="simulation-panel" *ngIf="simulating">
+              <mat-spinner diameter="24" />
+              <span>Calculating fees...</span>
+            </div>
+
+            <div class="simulation-result" *ngIf="simulation && !simulating">
+              <div class="sim-title">
+                <mat-icon>calculate</mat-icon>
+                Fee Breakdown
+              </div>
+              <div class="sim-grid">
+                <div class="sim-row">
+                  <span>Amount Sent</span>
+                  <strong>{{ simulation.sentAmount | currencyFormat:simulation.sentCurrency }}</strong>
+                </div>
+                <div class="sim-row">
+                  <span>Fixed Fee</span>
+                  <strong>{{ simulation.feeFixedAmount | currencyFormat:simulation.sentCurrency }}</strong>
+                </div>
+                <div class="sim-row">
+                  <span>% Fee ({{ simulation.feePercentage }}%)</span>
+                  <strong>{{ simulation.feeAmount - simulation.feeFixedAmount | currencyFormat:simulation.sentCurrency }}</strong>
+                </div>
+                <div class="sim-row total-row">
+                  <span>Total Fees</span>
+                  <strong>{{ simulation.feeAmount | currencyFormat:simulation.sentCurrency }}</strong>
+                </div>
+                <mat-divider />
+                <div class="sim-row">
+                  <span>Exchange Rate</span>
+                  <strong>1 {{ simulation.sentCurrency }} = {{ simulation.exchangeRate }} {{ simulation.receivedCurrency }}</strong>
+                </div>
+                <div class="sim-row receive-row">
+                  <span>Recipient Gets</span>
+                  <strong class="receive-big">
+                    {{ simulation.receivedAmount | currencyFormat:simulation.receivedCurrency }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="sim-error" *ngIf="simulationError">
+              <mat-icon>warning</mat-icon>
+              {{ simulationError }}
+            </div>
+
+          </div>
+
+          <div class="step-actions">
+            <button mat-flat-button color="primary"
+                    matStepperNext
+                    [disabled]="corridorForm.invalid || !simulation">
+              Continue
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- ── STEP 2: Sender Info ─────────────────────────────────────────────── -->
+      <mat-step [stepControl]="senderForm" label="Sender">
+        <form [formGroup]="senderForm">
+          <div class="step-content">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="senderFirstName" />
+                <mat-error>Required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="senderLastName" />
+                <mat-error>Required</mat-error>
+              </mat-form-field>
+            </div>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Phone</mat-label>
+                <input matInput formControlName="senderPhone" />
+                <mat-icon matPrefix>phone</mat-icon>
+                <mat-error>Required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>ID / Passport Number</mat-label>
+                <input matInput formControlName="senderIdNumber" />
+                <mat-icon matPrefix>badge</mat-icon>
+                <mat-error>Required</mat-error>
+              </mat-form-field>
+            </div>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Email (optional)</mat-label>
+                <input matInput type="email" formControlName="senderEmail" />
+                <mat-icon matPrefix>email</mat-icon>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Country</mat-label>
+                <mat-select formControlName="senderCountryId">
+                  <mat-option *ngFor="let c of countries" [value]="c.id">
+                    {{ c.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>flag</mat-icon>
+                <mat-error>Required</mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="step-actions">
+            <button mat-stroked-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon> Back
+            </button>
+            <button mat-flat-button color="primary"
+                    matStepperNext
+                    [disabled]="senderForm.invalid">
+              Continue <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- ── STEP 3: Recipient Info ──────────────────────────────────────────── -->
+      <mat-step [stepControl]="recipientForm" label="Recipient">
+        <form [formGroup]="recipientForm">
+          <div class="step-content">
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="recipientFirstName" />
+                <mat-error>Required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="recipientLastName" />
+                <mat-error>Required</mat-error>
+              </mat-form-field>
+            </div>
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Phone</mat-label>
+                <input matInput formControlName="recipientPhone" />
+                <mat-icon matPrefix>phone</mat-icon>
+                <mat-error>Required</mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Country</mat-label>
+                <mat-select formControlName="recipientCountryId">
+                  <mat-option *ngFor="let c of countries" [value]="c.id">
+                    {{ c.name }}
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>flag</mat-icon>
+                <mat-error>Required</mat-error>
+              </mat-form-field>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Notes (optional)</mat-label>
+              <textarea matInput formControlName="notes" rows="2"></textarea>
+            </mat-form-field>
+          </div>
+          <div class="step-actions">
+            <button mat-stroked-button matStepperPrevious>
+              <mat-icon>arrow_back</mat-icon> Back
+            </button>
+            <button mat-flat-button color="primary"
+                    matStepperNext
+                    [disabled]="recipientForm.invalid">
+              Review <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </div>
+        </form>
+      </mat-step>
+
+      <!-- ── STEP 4: Confirm ────────────────────────────────────────────────── -->
+      <mat-step label="Confirm">
+        <div class="step-content">
+
+          <div class="confirm-grid">
+
+            <!-- Sender summary -->
+            <div class="confirm-section">
+              <h3><mat-icon>person</mat-icon> Sender</h3>
+              <div class="confirm-row">
+                <span>Name</span>
+                <strong>
+                  {{ senderForm.value.senderFirstName }}
+                  {{ senderForm.value.senderLastName }}
+                </strong>
+              </div>
+              <div class="confirm-row">
+                <span>Phone</span>
+                <strong>{{ senderForm.value.senderPhone }}</strong>
+              </div>
+              <div class="confirm-row">
+                <span>ID</span>
+                <strong>{{ senderForm.value.senderIdNumber }}</strong>
+              </div>
+              <div class="confirm-row">
+                <span>Country</span>
+                <strong>{{ getSenderCountryLabel() }}</strong>
+              </div>
+            </div>
+
+            <!-- Recipient summary -->
+            <div class="confirm-section">
+              <h3><mat-icon>person_pin</mat-icon> Recipient</h3>
+              <div class="confirm-row">
+                <span>Name</span>
+                <strong>
+                  {{ recipientForm.value.recipientFirstName }}
+                  {{ recipientForm.value.recipientLastName }}
+                </strong>
+              </div>
+              <div class="confirm-row">
+                <span>Phone</span>
+                <strong>{{ recipientForm.value.recipientPhone }}</strong>
+              </div>
+              <div class="confirm-row">
+                <span>Country</span>
+                <strong>{{ getRecipientCountryLabel() }}</strong>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Transaction summary -->
+          <div class="transaction-summary" *ngIf="simulation">
+            <h3><mat-icon>receipt</mat-icon> Transaction Summary</h3>
+            <div class="confirm-row">
+              <span>Transfer Type</span>
+              <strong>{{ corridorForm.value.transferType }}</strong>
+            </div>
+            <div class="confirm-row">
+              <span>Amount Sent</span>
+              <strong>{{ simulation.sentAmount | currencyFormat:simulation.sentCurrency }}</strong>
+            </div>
+            <div class="confirm-row">
+              <span>Fees</span>
+              <strong>{{ simulation.feeAmount | currencyFormat:simulation.sentCurrency }}</strong>
+            </div>
+            <div class="confirm-row">
+              <span>Exchange Rate</span>
+              <strong>1 {{ simulation.sentCurrency }} = {{ simulation.exchangeRate }} {{ simulation.receivedCurrency }}</strong>
+            </div>
+            <div class="confirm-row total">
+              <span>Recipient Receives</span>
+              <strong class="receive-big">
+                {{ simulation.receivedAmount | currencyFormat:simulation.receivedCurrency }}
+              </strong>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="step-actions">
+          <button mat-stroked-button matStepperPrevious>
+            <mat-icon>arrow_back</mat-icon> Back
+          </button>
+          <button mat-flat-button
+                  color="primary"
+                  (click)="onSubmit()"
+                  [disabled]="submitting">
+            <mat-spinner *ngIf="submitting" diameter="20" color="accent" />
+            <ng-container *ngIf="!submitting">
+              <mat-icon>send</mat-icon>
+              Confirm & Send
+            </ng-container>
+          </button>
+        </div>
+      </mat-step>
+
+    </mat-stepper>
+  </ng-container>
+
+</div>

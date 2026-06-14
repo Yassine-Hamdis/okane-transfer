@@ -1,0 +1,166 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Payout</h1>
+  </div>
+
+  <div class="payout-wrapper">
+
+    <!-- ── STEP 1: SEARCH ──────────────────────────────────────────────────── -->
+    <mat-card class="payout-card" *ngIf="step === 'search'">
+      <div class="card-icon-header">
+        <div class="icon-circle">
+          <mat-icon>search</mat-icon>
+        </div>
+        <h2>Find Transfer</h2>
+        <p class="text-muted">Enter the withdrawal code to look up the transfer</p>
+      </div>
+
+      <div class="error-alert" *ngIf="errorMessage">
+        <mat-icon>error_outline</mat-icon>
+        {{ errorMessage }}
+      </div>
+
+      <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+        <mat-form-field appearance="outline" class="full-width code-input">
+          <mat-label>Withdrawal Code</mat-label>
+          <input matInput
+                 formControlName="code"
+                 placeholder="e.g. ABCD1234"
+                 [style.text-transform]="'uppercase'"
+                 autocomplete="off" />
+          <mat-icon matPrefix>vpn_key</mat-icon>
+          <mat-error>Enter a valid withdrawal code</mat-error>
+        </mat-form-field>
+
+        <button mat-flat-button
+                color="primary"
+                type="submit"
+                class="full-btn"
+                [disabled]="searching">
+          <mat-spinner *ngIf="searching" diameter="20" color="accent" />
+          <ng-container *ngIf="!searching">
+            <mat-icon>search</mat-icon> Search Transfer
+          </ng-container>
+        </button>
+      </form>
+    </mat-card>
+
+    <!-- ── STEP 2: VERIFY ──────────────────────────────────────────────────── -->
+    <ng-container *ngIf="step === 'verify' && foundTransfer">
+      <mat-card class="payout-card">
+        <div class="card-icon-header">
+          <div class="icon-circle verify">
+            <mat-icon>verified_user</mat-icon>
+          </div>
+          <h2>Verify & Pay</h2>
+        </div>
+
+        <!-- Transfer details preview -->
+        <div class="transfer-preview">
+          <div class="preview-row">
+            <span>Code</span>
+            <code class="code-chip">{{ foundTransfer.withdrawalCode }}</code>
+          </div>
+          <div class="preview-row">
+            <span>Recipient</span>
+            <strong>{{ foundTransfer.recipientFullName }}</strong>
+          </div>
+          <div class="preview-row">
+            <span>Phone</span>
+            <strong>{{ foundTransfer.recipientPhone }}</strong>
+          </div>
+          <div class="preview-row">
+            <span>Status</span>
+            <app-status-badge [status]="foundTransfer.status" />
+          </div>
+          <mat-divider class="my-12" />
+          <div class="preview-row amount-row">
+            <span>Amount to Pay</span>
+            <strong class="pay-amount">
+              {{ foundTransfer.receivedAmount | currencyFormat:foundTransfer.receivedCurrency }}
+            </strong>
+          </div>
+          <div class="preview-row">
+            <span>From</span>
+            <strong>{{ foundTransfer.senderFullName }} ({{ foundTransfer.senderCountry }})</strong>
+          </div>
+        </div>
+
+        <div class="error-alert" *ngIf="errorMessage">
+          <mat-icon>error_outline</mat-icon>
+          {{ errorMessage }}
+        </div>
+
+        <form [formGroup]="verifyForm" (ngSubmit)="onPayout()">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Recipient ID / Passport Number</mat-label>
+            <input matInput formControlName="recipientIdNumber" />
+            <mat-icon matPrefix>badge</mat-icon>
+            <mat-hint>Must match the recipient's identity document</mat-hint>
+            <mat-error>ID number is required</mat-error>
+          </mat-form-field>
+
+          <div class="verify-actions">
+            <button mat-stroked-button type="button" (click)="goBack()">
+              <mat-icon>arrow_back</mat-icon> Back
+            </button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="paying">
+              <mat-spinner *ngIf="paying" diameter="20" color="accent" />
+              <ng-container *ngIf="!paying">
+                <mat-icon>payments</mat-icon> Confirm Payout
+              </ng-container>
+            </button>
+          </div>
+        </form>
+
+      </mat-card>
+    </ng-container>
+
+    <!-- ── STEP 3: SUCCESS ──────────────────────────────────────────────────── -->
+    <mat-card class="payout-card success" *ngIf="step === 'success' && paidTransfer">
+      <div class="success-header-inner">
+        <div class="icon-circle success-circle">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <h2>Payout Successful!</h2>
+        <p>The transfer has been paid out successfully</p>
+      </div>
+
+      <div class="receipt">
+        <div class="receipt-title">RECEIPT</div>
+        <div class="preview-row">
+          <span>Code</span>
+          <code class="code-chip">{{ paidTransfer.withdrawalCode }}</code>
+        </div>
+        <div class="preview-row">
+          <span>Recipient</span>
+          <strong>{{ paidTransfer.recipientFullName }}</strong>
+        </div>
+        <div class="preview-row">
+          <span>Amount Paid</span>
+          <strong class="pay-amount">
+            {{ paidTransfer.receivedAmount | currencyFormat:paidTransfer.receivedCurrency }}
+          </strong>
+        </div>
+        <div class="preview-row">
+          <span>Paid By Agent</span>
+          <strong>{{ paidTransfer.receivingAgentName ?? 'You' }}</strong>
+        </div>
+        <div class="preview-row">
+          <span>Date</span>
+          <strong>{{ paidTransfer.paidAt | date:'medium' }}</strong>
+        </div>
+      </div>
+
+      <div class="verify-actions">
+        <button mat-stroked-button (click)="reset()">
+          <mat-icon>payments</mat-icon> New Payout
+        </button>
+        <button mat-flat-button color="primary" onclick="window.print()">
+          <mat-icon>print</mat-icon> Print Receipt
+        </button>
+      </div>
+    </mat-card>
+
+  </div>
+</div>
