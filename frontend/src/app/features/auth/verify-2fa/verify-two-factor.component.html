@@ -1,0 +1,64 @@
+<div class="auth-center-page">
+  <mat-card class="otp-card">
+
+    <!-- Icon -->
+    <div class="otp-icon">
+      <mat-icon>shield</mat-icon>
+    </div>
+
+    <mat-card-header>
+      <div class="card-header">
+        <h2>Two-Factor Authentication</h2>
+        <p class="subtitle">
+          Enter the 6-digit code sent to
+          <strong>{{ email }}</strong>
+        </p>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+
+      <!-- Error alert -->
+      <div class="error-alert" *ngIf="errorMessage">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+        <mat-form-field appearance="outline" class="full-width otp-field">
+          <mat-label>6-digit OTP code</mat-label>
+          <input matInput
+                 formControlName="otpCode"
+                 maxlength="6"
+                 placeholder="000000"
+                 autocomplete="one-time-code"
+                 inputmode="numeric" />
+          <mat-icon matPrefix>dialpad</mat-icon>
+          <mat-error *ngIf="otpCode.hasError('required')">OTP code is required</mat-error>
+          <mat-error *ngIf="otpCode.hasError('pattern') || otpCode.hasError('minlength')">
+            Must be exactly 6 digits
+          </mat-error>
+        </mat-form-field>
+
+        <button mat-flat-button
+                color="primary"
+                type="submit"
+                class="submit-btn"
+                [disabled]="loading">
+          <mat-spinner *ngIf="loading" diameter="20" color="accent" />
+          <span *ngIf="!loading">Verify Code</span>
+        </button>
+
+      </form>
+
+      <button mat-button
+              class="back-btn"
+              (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Back to login
+      </button>
+
+    </mat-card-content>
+  </mat-card>
+</div>
