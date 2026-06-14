@@ -1,0 +1,127 @@
+<div class="page-container">
+
+  <!-- Welcome header -->
+  <div class="welcome-header">
+    <div class="welcome-text">
+      <h1>Good {{ greeting }}, {{ agentName }} 👋</h1>
+      <p class="text-muted">{{ today | date:'fullDate' }}</p>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ── Today stats ────────────────────────────────────────────────────── -->
+    <div class="stats-row mb-24">
+      <mat-card class="stat-mini">
+        <mat-icon style="color:#3949ab">send</mat-icon>
+        <div>
+          <span class="stat-num">{{ todayStats.sent }}</span>
+          <span class="stat-lbl">Sent Today</span>
+        </div>
+      </mat-card>
+      <mat-card class="stat-mini">
+        <mat-icon style="color:#2e7d32">payments</mat-icon>
+        <div>
+          <span class="stat-num">{{ todayStats.paid }}</span>
+          <span class="stat-lbl">Paid Today</span>
+        </div>
+      </mat-card>
+      <mat-card class="stat-mini">
+        <mat-icon style="color:#c62828">cancel</mat-icon>
+        <div>
+          <span class="stat-num">{{ todayStats.cancelled }}</span>
+          <span class="stat-lbl">Cancelled</span>
+        </div>
+      </mat-card>
+      <mat-card class="stat-mini">
+        <mat-icon style="color:#e65100">attach_money</mat-icon>
+        <div>
+          <span class="stat-num">{{ todayStats.totalSent | number:'1.0-0' }}</span>
+          <span class="stat-lbl">Total Volume</span>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- ── Quick actions ──────────────────────────────────────────────────── -->
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="quick-actions mb-24">
+      <mat-card class="action-card"
+                *ngFor="let action of quickActions"
+                [routerLink]="action.route">
+        <div class="action-icon" [style.background]="action.color + '18'">
+          <mat-icon [style.color]="action.color">{{ action.icon }}</mat-icon>
+        </div>
+        <div class="action-info">
+          <span class="action-label">{{ action.label }}</span>
+          <span class="action-desc">{{ action.description }}</span>
+        </div>
+        <mat-icon class="action-arrow">chevron_right</mat-icon>
+      </mat-card>
+    </div>
+
+    <!-- ── Cash register summary ──────────────────────────────────────────── -->
+    <div class="bottom-grid">
+      <mat-card class="cash-card" *ngIf="cashRegister">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>point_of_sale</mat-icon>
+            Cash Register — {{ cashRegister.agencyName }}
+          </mat-card-title>
+          <span class="spacer"></span>
+          <a mat-button color="primary" routerLink="/agent/cash">View all</a>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="balance-grid">
+            <div class="balance-item"
+                 *ngFor="let b of cashRegister.balances">
+              <span class="balance-currency">{{ b.currencyCode }}</span>
+              <span class="balance-amount">
+                {{ b.currentBalance | currencyFormat:b.currencyCode }}
+              </span>
+              <span class="balance-symbol">{{ b.currencySymbol }}</span>
+            </div>
+          </div>
+          <div class="last-closed" *ngIf="cashRegister.lastClosedAt">
+            <mat-icon>schedule</mat-icon>
+            Last closed: {{ cashRegister.lastClosedAt | date:'medium' }}
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Recent transfers -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>receipt_long</mat-icon>
+            Recent Transfers
+          </mat-card-title>
+          <span class="spacer"></span>
+          <a mat-button color="primary" routerLink="/agent/my-transfers">View all</a>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="transfer-list">
+            <div class="transfer-row" *ngFor="let t of recentTransfers">
+              <div class="transfer-info">
+                <code class="code">{{ t.withdrawalCode }}</code>
+                <span class="transfer-name">{{ t.recipientFullName }}</span>
+              </div>
+              <div class="transfer-right">
+                <span class="transfer-amount">
+                  {{ t.sentAmount | currencyFormat:t.sentCurrency }}
+                </span>
+                <app-status-badge [status]="t.status" />
+              </div>
+            </div>
+            <div class="empty-list" *ngIf="recentTransfers.length === 0">
+              <mat-icon>inbox</mat-icon>
+              <p>No transfers yet today</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+  </ng-container>
+</div>

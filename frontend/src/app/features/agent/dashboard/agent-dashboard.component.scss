@@ -1,0 +1,234 @@
+.welcome-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--okane-text);
+    margin-bottom: 4px;
+  }
+}
+
+// ── Stats row ─────────────────────────────────────────────────────────────────
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+
+  @media (max-width: 768px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.stat-mini {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px !important;
+  border-radius: 12px !important;
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.stat-num {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.stat-lbl {
+  font-size: 0.78rem;
+  color: var(--okane-text-light);
+}
+
+// ── Quick actions ─────────────────────────────────────────────────────────────
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--okane-text);
+  margin-bottom: 16px;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px !important;
+  border-radius: 12px !important;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+  }
+}
+
+.action-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon { font-size: 24px; width: 24px; height: 24px; }
+}
+
+.action-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.action-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--okane-text);
+}
+
+.action-desc {
+  font-size: 0.78rem;
+  color: var(--okane-text-light);
+  margin-top: 2px;
+}
+
+.action-arrow {
+  color: var(--okane-text-light);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+// ── Bottom grid ───────────────────────────────────────────────────────────────
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+
+.cash-card mat-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+
+  mat-icon { font-size: 20px; width: 20px; height: 20px; }
+}
+
+.balance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.balance-item {
+  background: var(--okane-bg);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.balance-currency {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--okane-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balance-amount {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--okane-primary);
+  margin-top: 2px;
+}
+
+.balance-symbol {
+  font-size: 0.75rem;
+  color: var(--okane-text-light);
+}
+
+.last-closed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--okane-text-light);
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+// ── Transfer list ─────────────────────────────────────────────────────────────
+.transfer-list { display: flex; flex-direction: column; }
+
+.transfer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--okane-border);
+
+  &:last-child { border-bottom: none; }
+}
+
+.transfer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.code {
+  font-size: 0.75rem;
+  background: #e8eaf6;
+  color: var(--okane-primary);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.transfer-name { font-size: 0.875rem; font-weight: 500; }
+
+.transfer-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.transfer-amount {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--okane-text);
+}
+
+.empty-list {
+  text-align: center;
+  padding: 32px;
+  color: var(--okane-text-light);
+
+  mat-icon { font-size: 40px; width: 40px; height: 40px; opacity: 0.3; display: block; margin: 0 auto 8px; }
+  p { margin: 0; font-size: 0.875rem; }
+}
+
+.mb-24 { margin-bottom: 24px; }
+.spacer { flex: 1 1 auto; }
+
+// Computed greeting getter (add to TS file)

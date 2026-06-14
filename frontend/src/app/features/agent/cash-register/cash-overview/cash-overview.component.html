@@ -1,0 +1,99 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Cash Register</h1>
+    <div class="header-actions">
+      <a mat-stroked-button routerLink="/agent/cash/today">
+        <mat-icon>today</mat-icon> Today's Operations
+      </a>
+      <button mat-flat-button color="warn" (click)="closeRegister()">
+        <mat-icon>lock</mat-icon> Close Register
+      </button>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <ng-container *ngIf="!loading && register">
+
+    <!-- Agency info -->
+    <div class="agency-banner mb-24">
+      <mat-icon>store</mat-icon>
+      <div>
+        <span class="agency-name">{{ register.agencyName }}</span>
+        <span class="last-closed" *ngIf="register.lastClosedAt">
+          Last closed: {{ register.lastClosedAt | date:'medium' }}
+        </span>
+        <span class="last-closed" *ngIf="!register.lastClosedAt">
+          Register not yet closed today
+        </span>
+      </div>
+    </div>
+
+    <!-- Balance cards -->
+    <h2 class="section-title mb-16">Current Balances</h2>
+    <div class="balance-grid mb-24">
+      <mat-card class="balance-card"
+                *ngFor="let b of register.balances">
+        <div class="currency-code">{{ b.currencyCode }}</div>
+        <div class="balance-amount">
+          {{ b.currentBalance | currencyFormat:b.currencyCode }}
+        </div>
+        <div class="currency-symbol">{{ b.currencySymbol }}</div>
+        <div class="updated-at" *ngIf="b.updatedAt">
+          Updated {{ b.updatedAt | date:'shortTime' }}
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Discrepancy section -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Report Discrepancy</mat-card-title>
+        <mat-card-subtitle>Use this to report a cash count mismatch</mat-card-subtitle>
+        <span class="spacer"></span>
+        <button mat-stroked-button
+                (click)="showDiscrepancyForm = !showDiscrepancyForm">
+          <mat-icon>{{ showDiscrepancyForm ? 'expand_less' : 'warning' }}</mat-icon>
+          {{ showDiscrepancyForm ? 'Cancel' : 'Report' }}
+        </button>
+      </mat-card-header>
+
+      <mat-card-content *ngIf="showDiscrepancyForm">
+        <form [formGroup]="discrepancyForm"
+              (ngSubmit)="submitDiscrepancy()"
+              class="discrepancy-form">
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Currency</mat-label>
+              <mat-select formControlName="currencyId">
+                <mat-option *ngFor="let c of currencies" [value]="c.id">
+                  {{ c.code }} — {{ c.name }}
+                </mat-option>
+              </mat-select>
+              <mat-error>Required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Discrepancy Amount</mat-label>
+              <input matInput type="number" formControlName="amount" min="0.01" />
+              <mat-error>Valid amount required</mat-error>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Notes / Explanation</mat-label>
+            <textarea matInput formControlName="note" rows="3"></textarea>
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-flat-button color="warn" type="submit" [disabled]="saving">
+              {{ saving ? 'Submitting...' : 'Submit Report' }}
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+  </ng-container>
+</div>

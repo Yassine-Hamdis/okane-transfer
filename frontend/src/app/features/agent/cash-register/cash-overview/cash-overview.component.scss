@@ -1,0 +1,75 @@
+.header-actions { display: flex; gap: 12px; }
+
+.agency-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, var(--okane-primary-dk), var(--okane-primary));
+  color: #fff;
+  padding: 16px 20px;
+  border-radius: 12px;
+
+  mat-icon { font-size: 28px; width: 28px; height: 28px; }
+}
+
+.agency-name {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.last-closed {
+  display: block;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.balance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.balance-card {
+  padding: 20px !important;
+  border-radius: 12px !important;
+  text-align: center;
+  border-top: 4px solid var(--okane-primary);
+}
+
+.currency-code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--okane-text-light);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.balance-amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--okane-primary);
+  margin-bottom: 4px;
+}
+
+.currency-symbol {
+  font-size: 0.875rem;
+  color: var(--okane-text-light);
+}
+
+.updated-at {
+  font-size: 0.72rem;
+  color: var(--okane-text-light);
+  margin-top: 8px;
+}
+
+.section-title { font-size: 1rem; font-weight: 600; color: var(--okane-text); }
+
+.discrepancy-form { padding: 16px 0; }
+.full-width { width: 100%; }
+.form-actions { display: flex; justify-content: flex-end; }
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.spacer { flex: 1 1 auto; }
