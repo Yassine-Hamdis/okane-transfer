@@ -1,0 +1,85 @@
+<div class="page-container">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <a mat-icon-button routerLink="/admin/agencies">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <h1>Agency Detail</h1>
+    </div>
+    <div style="display:flex;gap:8px" *ngIf="agency">
+      <a mat-stroked-button [routerLink]="['/admin/agencies', agency.id, 'edit']">
+        <mat-icon>edit</mat-icon> Edit
+      </a>
+      <button mat-flat-button
+              [color]="agency.active ? 'warn' : 'primary'"
+              (click)="toggleStatus()">
+        {{ agency.active ? 'Suspend' : 'Activate' }}
+      </button>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <div class="detail-grid" *ngIf="!loading && agency">
+
+    <!-- Agency info -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>{{ agency.name }}</mat-card-title>
+        <mat-card-subtitle>{{ agency.city }}, {{ agency.countryName }}</mat-card-subtitle>
+        <span style="flex:1"></span>
+        <app-status-badge [status]="agency.active ? 'ACTIVE' : 'INACTIVE'" />
+      </mat-card-header>
+      <mat-card-content>
+
+        <div class="detail-row">
+          <span>Address</span>
+          <strong>{{ agency.address }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Country Code</span>
+          <code class="code-chip">{{ agency.countryCode }}</code>
+        </div>
+        <div class="detail-row">
+          <span>Daily Limit</span>
+          <strong>{{ agency.dailyLimit | number }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Current Manager</span>
+          <strong>{{ agency.managerName ?? 'Not assigned' }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Created At</span>
+          <strong>{{ agency.createdAt | date:'mediumDate' }}</strong>
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Assign manager -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Assign Manager</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="managerForm" (ngSubmit)="assignManager()">
+          <mat-form-field appearance="outline" style="width:100%">
+            <mat-label>Select Manager</mat-label>
+            <mat-select formControlName="managerId">
+              <mat-option *ngFor="let m of managers" [value]="m.id">
+                {{ m.firstName }} {{ m.lastName }} ({{ m.email }})
+              </mat-option>
+            </mat-select>
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px">
+            <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+              {{ saving ? 'Saving...' : 'Assign Manager' }}
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+</div>
