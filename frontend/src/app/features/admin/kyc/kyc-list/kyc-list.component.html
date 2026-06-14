@@ -1,0 +1,140 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>KYC / AML Review</h1>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <ng-container *ngIf="!loading">
+
+    <!-- Summary cards -->
+    <div class="kyc-summary mb-24">
+      <mat-card class="kyc-stat" [class.danger]="blocked.length > 0">
+        <mat-icon>block</mat-icon>
+        <div>
+          <span class="kyc-stat-value">{{ blocked.length }}</span>
+          <span class="kyc-stat-label">Blocked</span>
+        </div>
+      </mat-card>
+      <mat-card class="kyc-stat warning">
+        <mat-icon>flag</mat-icon>
+        <div>
+          <span class="kyc-stat-value">{{ flagged.length }}</span>
+          <span class="kyc-stat-label">Flagged</span>
+        </div>
+      </mat-card>
+      <mat-card class="kyc-stat">
+        <mat-icon>gpp_maybe</mat-icon>
+        <div>
+          <span class="kyc-stat-value">{{ watchlist.length }}</span>
+          <span class="kyc-stat-label">Watchlist Hits</span>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Tabs -->
+    <mat-card>
+      <mat-tab-group>
+
+        <!-- Flagged tab -->
+        <mat-tab [label]="'Flagged (' + flagged.length + ')'">
+          <ng-container *ngTemplateOutlet="kycTable; context: { records: flagged }" />
+        </mat-tab>
+
+        <!-- Blocked tab -->
+        <mat-tab [label]="'Blocked (' + blocked.length + ')'">
+          <ng-container *ngTemplateOutlet="kycTable; context: { records: blocked }" />
+        </mat-tab>
+
+        <!-- Watchlist tab -->
+        <mat-tab [label]="'Watchlist (' + watchlist.length + ')'">
+          <ng-container *ngTemplateOutlet="kycTable; context: { records: watchlist }" />
+        </mat-tab>
+
+      </mat-tab-group>
+    </mat-card>
+
+  </ng-container>
+</div>
+
+<!-- Reusable table template -->
+<ng-template #kycTable let-records="records">
+  <div class="table-wrapper">
+    <table mat-table [dataSource]="records">
+
+      <ng-container matColumnDef="withdrawalCode">
+        <th mat-header-cell *matHeaderCellDef>Transfer Code</th>
+        <td mat-cell *matCellDef="let r">
+          <code class="code-chip">{{ r.withdrawalCode }}</code>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>KYC Status</th>
+        <td mat-cell *matCellDef="let r">
+          <app-status-badge [status]="r.status" />
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="riskScore">
+        <th mat-header-cell *matHeaderCellDef>Risk Score</th>
+        <td mat-cell *matCellDef="let r">
+          <div class="risk-cell">
+            <span class="risk-value" [style.color]="getRiskColor(r.riskScore)">
+              {{ r.riskScore }}
+            </span>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="r.riskScore"
+              [color]="r.riskScore >= 80 ? 'warn' : r.riskScore >= 50 ? 'accent' : 'primary'" />
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="watchlistHit">
+        <th mat-header-cell *matHeaderCellDef>Watchlist</th>
+        <td mat-cell *matCellDef="let r">
+          <span class="badge badge-danger" *ngIf="r.watchlistHit">
+            <mat-icon>warning</mat-icon> HIT
+          </span>
+          <span class="text-muted" *ngIf="!r.watchlistHit">—</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="suspicion">
+        <th mat-header-cell *matHeaderCellDef>Suspicion</th>
+        <td mat-cell *matCellDef="let r">
+          <span class="badge badge-warning" *ngIf="r.suspicionDeclared">
+            <mat-icon>report</mat-icon> Declared
+          </span>
+          <span class="text-muted" *ngIf="!r.suspicionDeclared">—</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="checkedAt">
+        <th mat-header-cell *matHeaderCellDef>Checked At</th>
+        <td mat-cell *matCellDef="let r">{{ r.checkedAt | date:'medium' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Action</th>
+        <td mat-cell *matCellDef="let r">
+          <a mat-flat-button color="primary"
+             [routerLink]="['/admin/kyc', r.id]">
+            Review
+          </a>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+          <mat-icon>check_circle</mat-icon>
+          <p>No records in this category</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+</ng-template>

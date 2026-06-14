@@ -1,0 +1,123 @@
+<div class="page-container">
+  <div class="page-header">
+    <div class="header-left">
+      <a mat-icon-button routerLink="/admin/kyc">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <h1>KYC Review</h1>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <ng-container *ngIf="!loading && record">
+    <div class="review-grid">
+
+      <!-- Left: Record details -->
+      <mat-card class="detail-card">
+        <mat-card-header>
+          <mat-card-title>Transfer Details</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+
+          <div class="detail-row">
+            <span class="detail-label">Transfer Code</span>
+            <code class="code-chip">{{ record!.withdrawalCode }}</code>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Current KYC Status</span>
+            <app-status-badge [status]="record!.status" />
+          </div>
+
+          <!-- Risk score -->
+          <div class="detail-row risk-row">
+            <span class="detail-label">Risk Score</span>
+            <div class="risk-display">
+              <span class="risk-number">{{ record!.riskScore }}/100</span>
+              <mat-progress-bar
+                mode="determinate"
+                [value]="record!.riskScore"
+                [color]="getRiskColor(record!.riskScore)"
+                class="risk-bar" />
+            </div>
+          </div>
+
+          <mat-divider class="my-16" />
+
+          <!-- Flags -->
+          <div class="flags-row">
+            <div class="flag-item" [class.active]="record!.watchlistHit">
+              <mat-icon>{{ record!.watchlistHit ? 'gpp_bad' : 'gpp_good' }}</mat-icon>
+              <span>Watchlist Hit</span>
+            </div>
+            <div class="flag-item" [class.active]="record!.suspicionDeclared">
+              <mat-icon>{{ record!.suspicionDeclared ? 'report' : 'report_off' }}</mat-icon>
+              <span>Suspicion Declared</span>
+            </div>
+          </div>
+
+          <mat-divider class="my-16" />
+
+          <div class="detail-row" *ngIf="record!.checkedByEmail">
+            <span class="detail-label">Checked by</span>
+            <span>{{ record!.checkedByEmail }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">Last checked</span>
+            <span>{{ record!.checkedAt | date:'medium' }}</span>
+          </div>
+
+          <div class="notes-section" *ngIf="record!.notes">
+            <span class="detail-label">Previous notes</span>
+            <p class="notes-text">{{ record!.notes }}</p>
+          </div>
+
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Right: Review form -->
+      <mat-card class="review-form-card">
+        <mat-card-header>
+          <mat-card-title>Submit Review</mat-card-title>
+          <mat-card-subtitle>Update the KYC status for this transfer</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>New Status</mat-label>
+              <mat-select formControlName="status">
+                <mat-option *ngFor="let s of statusOptions" [value]="s.value">
+                  {{ s.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Review Notes</mat-label>
+              <textarea matInput
+                        formControlName="notes"
+                        rows="5"
+                        placeholder="Describe your findings and decision rationale...">
+              </textarea>
+              <mat-error>Notes are required</mat-error>
+            </mat-form-field>
+
+            <div class="form-actions">
+              <button mat-stroked-button type="button" routerLink="/admin/kyc">
+                Cancel
+              </button>
+              <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+                {{ saving ? 'Submitting...' : 'Submit Review' }}
+              </button>
+            </div>
+
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+  </ng-container>
+</div>
