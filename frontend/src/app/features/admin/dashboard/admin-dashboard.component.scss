@@ -1,0 +1,122 @@
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 12px !important;
+  cursor: default;
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &.clickable {
+    cursor: pointer;
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+    }
+  }
+}
+
+.stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon { font-size: 26px; width: 26px; height: 26px; }
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--okane-text);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--okane-text-light);
+  margin-top: 4px;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+
+.chart-card {
+  border-radius: 12px !important;
+
+  &--full { width: 100%; }
+
+  mat-card-header {
+    padding: 16px 16px 0;
+    mat-card-title { font-size: 1rem; font-weight: 600; }
+  }
+
+  mat-card-content { padding: 16px; }
+}
+
+.chart-container {
+  height: 280px;
+  position: relative;
+}
+
+// ── Simple table ─────────────────────────────────────────────────────────────
+.simple-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    color: var(--okane-text-light);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--okane-border);
+  }
+
+  td {
+    padding: 12px 12px;
+    border-bottom: 1px solid var(--okane-border);
+    color: var(--okane-text);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--okane-bg); }
+
+  code {
+    background: #e8eaf6;
+    color: var(--okane-primary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+}
+
+.today {
+  color: var(--okane-text-light);
+  font-size: 0.9rem;
+}

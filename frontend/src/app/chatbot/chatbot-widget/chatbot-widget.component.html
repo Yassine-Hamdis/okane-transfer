@@ -1,0 +1,111 @@
+<!-- ── Floating button ──────────────────────────────────────────────────────── -->
+<button class="chat-fab"
+        (click)="toggleOpen()"
+        [class.open]="isOpen"
+        matTooltip="Chat with us"
+        matTooltipPosition="left">
+  <mat-icon *ngIf="!isOpen">chat</mat-icon>
+  <mat-icon *ngIf="isOpen">close</mat-icon>
+</button>
+
+<!-- ── Chat window ──────────────────────────────────────────────────────────── -->
+<div class="chat-window" [class.visible]="isOpen" [dir]="isRtl() ? 'rtl' : 'ltr'">
+
+  <!-- Header -->
+  <div class="chat-header">
+    <div class="chat-header-left">
+      <div class="bot-avatar">
+        <mat-icon>smart_toy</mat-icon>
+      </div>
+      <div>
+        <span class="bot-name">OkaneBot</span>
+        <span class="bot-status">
+          <span class="status-dot"></span>
+          Online
+        </span>
+      </div>
+    </div>
+
+    <div class="chat-header-right">
+      <!-- Language selector -->
+      <div class="lang-selector">
+        <button class="lang-btn"
+                *ngFor="let lang of languages"
+                [class.active]="selectedLang === lang.value"
+                (click)="changeLanguage(lang.value)"
+                [matTooltip]="lang.label">
+          {{ lang.flag }}
+        </button>
+      </div>
+
+      <button mat-icon-button class="close-btn" (click)="close()">
+        <mat-icon>minimize</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages area -->
+  <div class="messages-area">
+
+    <!-- Empty state -->
+    <div class="chat-empty" *ngIf="messages.length === 0 && !isTyping">
+      <mat-icon>chat_bubble_outline</mat-icon>
+      <p>Starting conversation...</p>
+    </div>
+
+    <!-- Messages -->
+    <div class="message-wrapper"
+         *ngFor="let msg of messages"
+         [class.user-msg]="msg.sender === 'USER'"
+         [class.bot-msg]="msg.sender === 'BOT'">
+
+      <!-- Bot avatar (only for bot messages) -->
+      <div class="msg-avatar" *ngIf="msg.sender === 'BOT'">
+        <mat-icon>smart_toy</mat-icon>
+      </div>
+
+      <div class="bubble" [class.escalated]="msg.escalated">
+        <p>{{ msg.content }}</p>
+        <span class="msg-time">
+          {{ msg.timestamp | date:'shortTime' }}
+        </span>
+      </div>
+
+    </div>
+
+    <!-- Typing indicator -->
+    <div class="typing-indicator" *ngIf="isTyping">
+      <div class="msg-avatar">
+        <mat-icon>smart_toy</mat-icon>
+      </div>
+      <div class="typing-bubble">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>
+
+    <!-- Scroll anchor -->
+    <div #messagesEnd></div>
+  </div>
+
+  <!-- Input area -->
+  <div class="chat-input-area">
+    <form [formGroup]="messageForm"
+          (ngSubmit)="onSend()"
+          class="input-form">
+      <textarea class="msg-input"
+                formControlName="content"
+                [placeholder]="isRtl() ? 'اكتب رسالتك...' : 'Type a message...'"
+                rows="1"
+                (keydown)="onKeyDown($event)">
+      </textarea>
+      <button class="send-btn"
+              type="submit"
+              [disabled]="messageForm.invalid || isTyping">
+        <mat-icon>send</mat-icon>
+      </button>
+    </form>
+  </div>
+
+</div>

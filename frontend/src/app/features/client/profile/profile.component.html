@@ -1,0 +1,159 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>My Profile</h1>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <ng-container *ngIf="!loading && profile">
+    <div class="profile-grid">
+
+      <!-- ── Left: Avatar card ──────────────────────────────────────────────── -->
+      <mat-card class="avatar-card">
+        <div class="avatar-circle">{{ getInitials() }}</div>
+        <h2>{{ profile.firstName }} {{ profile.lastName }}</h2>
+        <p class="role-label">{{ profile.role | slice:5 }}</p>
+        <p class="email-label">{{ profile.email }}</p>
+
+        <mat-divider class="my-16" />
+
+        <!-- 2FA toggle -->
+        <div class="twofa-row">
+          <div class="twofa-info">
+            <mat-icon [color]="profile.twoFactorEnabled ? 'primary' : ''">
+              {{ profile.twoFactorEnabled ? 'security' : 'no_encryption' }}
+            </mat-icon>
+            <div>
+              <span class="twofa-label">Two-Factor Auth</span>
+              <span class="twofa-status">
+                {{ profile.twoFactorEnabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </div>
+          </div>
+          <button mat-stroked-button
+                  [color]="profile.twoFactorEnabled ? 'warn' : 'primary'"
+                  (click)="toggleTwoFactor()"
+                  [disabled]="togglingTwoFa">
+            <mat-spinner *ngIf="togglingTwoFa" diameter="16" />
+            <span *ngIf="!togglingTwoFa">
+              {{ profile.twoFactorEnabled ? 'Disable' : 'Enable' }}
+            </span>
+          </button>
+        </div>
+
+        <mat-divider class="my-16" />
+
+        <!-- Account info -->
+        <div class="account-info">
+          <div class="info-row">
+            <mat-icon>calendar_today</mat-icon>
+            <span>Member since {{ profile.createdAt | date:'mediumDate' }}</span>
+          </div>
+          <div class="info-row" *ngIf="profile.agencyName">
+            <mat-icon>store</mat-icon>
+            <span>{{ profile.agencyName }}</span>
+          </div>
+        </div>
+
+        <mat-divider class="my-16" />
+
+        <!-- Change password link -->
+        <a mat-stroked-button
+           routerLink="/client/change-password"
+           class="full-btn">
+          <mat-icon>lock</mat-icon>
+          Change Password
+        </a>
+      </mat-card>
+
+      <!-- ── Right: Edit form ───────────────────────────────────────────────── -->
+      <mat-card class="form-card">
+        <mat-card-header>
+          <mat-card-title>Personal Information</mat-card-title>
+          <span class="spacer"></span>
+          <button mat-icon-button
+                  *ngIf="!editMode"
+                  (click)="enableEdit()"
+                  matTooltip="Edit profile">
+            <mat-icon>edit</mat-icon>
+          </button>
+        </mat-card-header>
+
+        <mat-card-content>
+
+          <!-- View mode -->
+          <div class="view-mode" *ngIf="!editMode">
+            <div class="view-row">
+              <span class="view-label">First Name</span>
+              <span>{{ profile.firstName }}</span>
+            </div>
+            <div class="view-row">
+              <span class="view-label">Last Name</span>
+              <span>{{ profile.lastName }}</span>
+            </div>
+            <div class="view-row">
+              <span class="view-label">Email</span>
+              <span>{{ profile.email }}</span>
+            </div>
+            <div class="view-row">
+              <span class="view-label">Phone</span>
+              <span>{{ profile.phone }}</span>
+            </div>
+          </div>
+
+          <!-- Edit mode -->
+          <form [formGroup]="form"
+                (ngSubmit)="onSave()"
+                *ngIf="editMode">
+
+            <div class="form-row">
+              <mat-form-field appearance="outline">
+                <mat-label>First Name</mat-label>
+                <input matInput formControlName="firstName" />
+                <mat-error>Required, min 2 characters</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Last Name</mat-label>
+                <input matInput formControlName="lastName" />
+                <mat-error>Required, min 2 characters</mat-error>
+              </mat-form-field>
+            </div>
+
+            <!-- Email (read-only) -->
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Email (cannot be changed)</mat-label>
+              <input matInput [value]="profile.email" readonly />
+              <mat-icon matPrefix>email</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Phone</mat-label>
+              <input matInput formControlName="phone" />
+              <mat-icon matPrefix>phone</mat-icon>
+              <mat-error>Required</mat-error>
+            </mat-form-field>
+
+            <div class="edit-actions">
+              <button mat-stroked-button
+                      type="button"
+                      (click)="cancelEdit()">
+                Cancel
+              </button>
+              <button mat-flat-button
+                      color="primary"
+                      type="submit"
+                      [disabled]="saving">
+                <mat-spinner *ngIf="saving" diameter="18" />
+                <span *ngIf="!saving">Save Changes</span>
+              </button>
+            </div>
+
+          </form>
+
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+  </ng-container>
+</div>

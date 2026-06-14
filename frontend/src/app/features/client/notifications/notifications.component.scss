@@ -1,0 +1,123 @@
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: var(--okane-text-light);
+
+  mat-icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    opacity: 0.2;
+    display: block;
+    margin: 0 auto 12px;
+  }
+
+  p { margin: 0; font-size: 0.95rem; }
+}
+
+.notif-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--okane-border);
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:last-child { border-bottom: none; }
+
+  &:hover { background: var(--okane-bg); }
+
+  &.unread {
+    background: #f5f7ff;
+    border-left: 3px solid var(--okane-primary);
+  }
+}
+
+// ── Channel icon ──────────────────────────────────────────────────────────────
+.notif-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon { font-size: 22px; width: 22px; height: 22px; }
+
+  &.channel-email { background: #e3f2fd; mat-icon { color: #0277bd; } }
+  &.channel-sms   { background: #e8f5e9; mat-icon { color: #2e7d32; } }
+  &.channel-push  { background: #fce4ec; mat-icon { color: #c62828; } }
+}
+
+// ── Notif body ────────────────────────────────────────────────────────────────
+.notif-body { flex: 1; min-width: 0; }
+
+.notif-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.notif-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--okane-text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  padding-right: 8px;
+}
+
+.unread-badge {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--okane-primary);
+  flex-shrink: 0;
+}
+
+.notif-msg {
+  font-size: 0.85rem;
+  color: var(--okane-text-light);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.notif-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.channel-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e8eaf6;
+  color: var(--okane-primary);
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: var(--okane-text-light);
+}
+
+.read-at {
+  font-size: 0.72rem;
+  color: var(--okane-text-light);
+  font-style: italic;
+}

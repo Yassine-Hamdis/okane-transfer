@@ -1,0 +1,176 @@
+<div class="track-page">
+
+  <!-- Header -->
+  <div class="track-header">
+    <div class="track-logo">
+      <mat-icon>account_balance</mat-icon>
+    </div>
+    <h1>Track Your Transfer</h1>
+    <p>Enter your withdrawal code to check the status of your transfer</p>
+  </div>
+
+  <!-- Search card -->
+  <mat-card class="track-card">
+    <form [formGroup]="form" (ngSubmit)="track()">
+      <mat-form-field appearance="outline" class="code-field">
+        <mat-label>Withdrawal Code</mat-label>
+        <input matInput
+               formControlName="code"
+               placeholder="e.g. ABCD1234"
+               [style.text-transform]="'uppercase'"
+               autocomplete="off" />
+        <mat-icon matPrefix>vpn_key</mat-icon>
+        <mat-error>Please enter a valid withdrawal code</mat-error>
+      </mat-form-field>
+
+      <button mat-flat-button
+              color="primary"
+              type="submit"
+              class="track-btn"
+              [disabled]="tracking">
+        <mat-spinner *ngIf="tracking" diameter="20" color="accent" />
+        <ng-container *ngIf="!tracking">
+          <mat-icon>search</mat-icon>
+          Track Transfer
+        </ng-container>
+      </button>
+    </form>
+
+    <!-- Error -->
+    <div class="error-alert" *ngIf="errorMessage">
+      <mat-icon>error_outline</mat-icon>
+      {{ errorMessage }}
+    </div>
+  </mat-card>
+
+  <!-- ── Result ──────────────────────────────────────────────────────────── -->
+  <mat-card class="result-card" *ngIf="result">
+
+    <!-- Status banner -->
+    <div class="status-banner"
+         [style.background]="getStatusColor(result.status) + '18'"
+         [style.border-color]="getStatusColor(result.status)">
+
+      <div class="status-icon-wrap"
+           [style.background]="getStatusColor(result.status) + '22'">
+        <mat-icon [style.color]="getStatusColor(result.status)">
+          {{ getStatusIcon(result.status) }}
+        </mat-icon>
+      </div>
+
+      <div class="status-info">
+        <span class="status-label">Status</span>
+        <app-status-badge [status]="result.status" />
+      </div>
+
+      <div class="code-display">
+        <span class="code-label">Code</span>
+        <code>{{ result.withdrawalCode }}</code>
+      </div>
+    </div>
+
+    <!-- Transfer details -->
+    <div class="result-body">
+
+      <div class="detail-section">
+        <h3><mat-icon>person_pin</mat-icon> Recipient</h3>
+        <div class="detail-row">
+          <span>Name</span>
+          <strong>{{ result.recipientFullName }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Amount to receive</span>
+          <strong class="receive-amount">
+            {{ result.receivedAmount | currencyFormat:result.receivedCurrency }}
+          </strong>
+        </div>
+      </div>
+
+      <mat-divider class="my-16" />
+
+      <div class="detail-section">
+        <h3><mat-icon>store</mat-icon> Transfer Info</h3>
+        <div class="detail-row">
+          <span>Sending Agency</span>
+          <strong>{{ result.sendingAgency }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Transfer Type</span>
+          <strong>{{ result.transferType }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Created</span>
+          <strong>{{ result.createdAt | date:'medium' }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Expires</span>
+          <strong [class.expired-text]="isExpired(result.expiresAt)">
+            {{ result.expiresAt | date:'medium' }}
+            <span *ngIf="isExpired(result.expiresAt)"> (Expired)</span>
+          </strong>
+        </div>
+        <div class="detail-row" *ngIf="result.paidAt">
+          <span>Paid At</span>
+          <strong class="paid-text">{{ result.paidAt | date:'medium' }}</strong>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="transfer-timeline">
+        <div class="timeline-step" [class.done]="true">
+          <div class="tl-dot done">
+            <mat-icon>check</mat-icon>
+          </div>
+          <div class="tl-content">
+            <span class="tl-label">Transfer Created</span>
+            <span class="tl-date">{{ result.createdAt | date:'shortDate' }}</span>
+          </div>
+        </div>
+
+        <div class="timeline-line" [class.done]="result.status === 'PAYE'"></div>
+
+        <div class="timeline-step"
+             [class.done]="result.status === 'PAYE'"
+             [class.active]="result.status === 'EN_ATTENTE'">
+          <div class="tl-dot"
+               [class.done]="result.status === 'PAYE'"
+               [class.active]="result.status === 'EN_ATTENTE'">
+            <mat-icon *ngIf="result.status === 'PAYE'">check</mat-icon>
+            <mat-icon *ngIf="result.status === 'EN_ATTENTE'">schedule</mat-icon>
+            <mat-icon *ngIf="result.status !== 'PAYE' && result.status !== 'EN_ATTENTE'">
+              close
+            </mat-icon>
+          </div>
+          <div class="tl-content">
+            <span class="tl-label">Ready for Pickup</span>
+            <span class="tl-date" *ngIf="result.status === 'EN_ATTENTE'">Waiting</span>
+          </div>
+        </div>
+
+        <div class="timeline-line" [class.done]="result.status === 'PAYE'"></div>
+
+        <div class="timeline-step" [class.done]="result.status === 'PAYE'">
+          <div class="tl-dot" [class.done]="result.status === 'PAYE'">
+            <mat-icon>payments</mat-icon>
+          </div>
+          <div class="tl-content">
+            <span class="tl-label">Paid Out</span>
+            <span class="tl-date" *ngIf="result.paidAt">
+              {{ result.paidAt | date:'shortDate' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="result-actions">
+      <button mat-stroked-button (click)="reset()">
+        <mat-icon>search</mat-icon> Track Another
+      </button>
+    </div>
+
+  </mat-card>
+
+</div>
