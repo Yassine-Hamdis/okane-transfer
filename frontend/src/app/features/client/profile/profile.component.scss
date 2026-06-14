@@ -1,0 +1,150 @@
+.profile-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 800px) { grid-template-columns: 1fr; }
+}
+
+// ── Avatar card ───────────────────────────────────────────────────────────────
+.avatar-card {
+  border-radius: 16px !important;
+  padding: 8px;
+  text-align: center;
+}
+
+.avatar-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--okane-primary-dk), var(--okane-primary));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 16px auto 12px;
+}
+
+.avatar-card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.role-label {
+  display: inline-block;
+  background: #e8eaf6;
+  color: var(--okane-primary);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.email-label {
+  color: var(--okane-text-light);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.my-16 { margin: 16px 0 !important; }
+
+// ── 2FA row ───────────────────────────────────────────────────────────────────
+.twofa-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.twofa-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  mat-icon { font-size: 22px; width: 22px; height: 22px; }
+}
+
+.twofa-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.twofa-status {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--okane-text-light);
+}
+
+// ── Account info ──────────────────────────────────────────────────────────────
+.account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--okane-text-light);
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+.full-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+// ── Form card ─────────────────────────────────────────────────────────────────
+.form-card {
+  border-radius: 16px !important;
+}
+
+.view-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.view-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--okane-border);
+  font-size: 0.9rem;
+
+  &:last-child { border-bottom: none; }
+}
+
+.view-label {
+  color: var(--okane-text-light);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.full-width { width: 100%; }
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+
+  button { display: flex; align-items: center; gap: 6px; }
+}
+
+.spacer { flex: 1 1 auto; }
