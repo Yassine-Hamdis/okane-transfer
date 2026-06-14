@@ -1,39 +1,417 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
+// ── Angular Material theme ──────────────────────────────────────────────────
 @use '@angular/material' as mat;
 
-html {
-  height: 100%;
-  @include mat.theme(
-    (
-      color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
-      ),
-      typography: Roboto,
-      density: 0,
-    )
-  );
+@include mat.core();
+
+// Primary palette: deep blue (professional fintech)
+$okane-primary: mat.m2-define-palette(mat.$m2-indigo-palette, 700, 400, 900);
+// Accent palette: amber (call-to-action buttons)
+$okane-accent:  mat.m2-define-palette(mat.$m2-amber-palette, 600, 300, 800);
+// Warn palette: red
+$okane-warn:    mat.m2-define-palette(mat.$m2-red-palette);
+
+$okane-theme: mat.m2-define-light-theme((
+  color: (
+    primary: $okane-primary,
+    accent:  $okane-accent,
+    warn:    $okane-warn,
+  ),
+  typography: mat.m2-define-typography-config(),
+  density: 0
+));
+
+@include mat.all-component-themes($okane-theme);
+
+// ── Global resets & variables ───────────────────────────────────────────────
+:root {
+  --okane-primary:     #3949ab;   // indigo-700
+  --okane-primary-dk:  #1a237e;   // indigo-900
+  --okane-accent:      #ffb300;   // amber-600
+  --okane-success:     #2e7d32;   // green-800
+  --okane-danger:      #c62828;   // red-800
+  --okane-warning:     #f57f17;   // amber-900
+  --okane-info:        #0277bd;   // light-blue-800
+  --okane-bg:          #f5f6fa;
+  --okane-surface:     #ffffff;
+  --okane-text:        #212121;
+  --okane-text-light:  #757575;
+  --okane-border:      #e0e0e0;
+  --sidebar-width:     260px;
+  --transition-speed:  0.3s;
 }
 
-body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
-
-  // Reset the user agent margin.
+* {
+  box-sizing: border-box;
   margin: 0;
-  height: 100%;
+  padding: 0;
 }
-/* You can add global styles to this file, and also import other style files */
+
+html, body {
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+  background-color: var(--okane-bg);
+  color: var(--okane-text);
+}
+
+// ── Typography ──────────────────────────────────────────────────────────────
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--okane-primary-dk);
+  margin-bottom: 12px;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+h5 { font-size: 1rem; }
+h6 { font-size: 0.875rem; }
+
+p {
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+.page-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--okane-primary-dk);
+  }
+}
+
+.card {
+  background: var(--okane-surface);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: box-shadow var(--transition-speed) ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+}
+
+// ── Status badge colors ─────────────────────────────────────────────────────
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all var(--transition-speed) ease;
+
+  &.badge-pending   { background: #e3f2fd; color: var(--okane-info); }
+  &.badge-success   { background: #e8f5e9; color: var(--okane-success); }
+  &.badge-danger    { background: #ffebee; color: var(--okane-danger); }
+  &.badge-grey      { background: #f5f5f5; color: var(--okane-text-light); }
+  &.badge-warning   { background: #fff3e0; color: var(--okane-warning); }
+  &.badge-active    { background: #c8e6c9; color: var(--okane-success); }
+  &.badge-inactive  { background: #f5f5f5; color: var(--okane-text-light); }
+}
+
+// ── Table helpers ───────────────────────────────────────────────────────────
+.table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.mat-mdc-table {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .mat-mdc-header-cell {
+    background: var(--okane-primary);
+    color: white;
+    font-weight: 600;
+    padding: 16px;
+  }
+
+  .mat-mdc-cell {
+    padding: 16px;
+  }
+
+  .mat-mdc-row {
+    border-bottom: 1px solid var(--okane-border);
+    transition: background-color var(--transition-speed) ease;
+
+    &:hover {
+      background-color: var(--okane-bg);
+    }
+
+    &.mat-mdc-row-odd {
+      background-color: var(--okane-surface);
+    }
+  }
+}
+
+// ── Form helpers ────────────────────────────────────────────────────────────
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-row-full {
+  grid-column: 1 / -1;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+::ng-deep {
+  .mat-mdc-form-field {
+    .mat-mdc-form-field-hint-wrapper {
+      padding: 0;
+    }
+
+    .mdc-text-field--filled {
+      background-color: var(--okane-bg);
+    }
+  }
+
+  .mat-mdc-button,
+  .mat-mdc-raised-button {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all var(--transition-speed) ease;
+  }
+
+  .mat-mdc-button.mat-primary {
+    &:hover:not(:disabled) {
+      box-shadow: 0 4px 12px rgba(57, 73, 171, 0.3);
+    }
+  }
+}
+
+// ── Grid System ─────────────────────────────────────────────────────────────
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Flexbox utilities ───────────────────────────────────────────────────────
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-center {
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flex-around {
+  justify-content: space-around;
+  align-items: center;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.gap-8 {
+  gap: 8px;
+}
+
+.gap-16 {
+  gap: 16px;
+}
+
+.gap-24 {
+  gap: 24px;
+}
+
+// ── Loading & skeleton states ───────────────────────────────────────────────
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--okane-border) 25%,
+    #f0f0f0 50%,
+    var(--okane-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  min-height: 300px;
+}
+
+// ── Text utilities ──────────────────────────────────────────────────────────
+.text-muted {
+  color: var(--okane-text-light);
+  font-size: 0.875rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-bold {
+  font-weight: 600;
+}
+
+.text-success {
+  color: var(--okane-success);
+}
+
+.text-danger {
+  color: var(--okane-danger);
+}
+
+.text-warning {
+  color: var(--okane-warning);
+}
+
+.text-info {
+  color: var(--okane-info);
+}
+
+// ── Spacing utilities ───────────────────────────────────────────────────────
+// Margin Top
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mt-32 { margin-top: 32px; }
+
+// Margin Bottom
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.mb-32 { margin-bottom: 32px; }
+
+// Margin
+.m-8 { margin: 8px; }
+.m-16 { margin: 16px; }
+.m-24 { margin: 24px; }
+
+// Padding
+.p-8 { padding: 8px; }
+.p-16 { padding: 16px; }
+.p-24 { padding: 24px; }
+
+// ── Display utilities ───────────────────────────────────────────────────────
+.d-none {
+  display: none;
+}
+
+.d-block {
+  display: block;
+}
+
+.d-inline {
+  display: inline;
+}
+
+.d-inline-block {
+  display: inline-block;
+}
+
+// ── Other utilities ─────────────────────────────────────────────────────────
+.spacer {
+  flex: 1 1 auto;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
