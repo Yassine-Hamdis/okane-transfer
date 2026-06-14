@@ -1,0 +1,156 @@
+<div class="auth-page">
+
+  <!-- Left branding panel (same style as login) -->
+  <div class="auth-brand">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+      <h1>OkaneTransfer</h1>
+      <p>Join thousands of customers sending money worldwide</p>
+
+      <div class="brand-steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <span>Create your free account</span>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <span>Verify your identity</span>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <span>Send money instantly</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right form panel -->
+  <div class="auth-form-panel">
+    <mat-card class="auth-card">
+
+      <mat-card-header>
+        <div class="card-header">
+          <h2>Create account</h2>
+          <p class="subtitle">Fill in your details to get started</p>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+
+        <!-- Success alert -->
+        <div class="success-alert" *ngIf="successMessage">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ successMessage }}</span>
+        </div>
+
+        <!-- Error alert -->
+        <div class="error-alert" *ngIf="errorMessage">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <form [formGroup]="form"
+              (ngSubmit)="onSubmit()"
+              novalidate
+              *ngIf="!successMessage">
+
+          <!-- Name row -->
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>First name</mat-label>
+              <input matInput formControlName="firstName" />
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error *ngIf="firstName.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="firstName.hasError('minlength')">Min 2 characters</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Last name</mat-label>
+              <input matInput formControlName="lastName" />
+              <mat-icon matPrefix>person</mat-icon>
+              <mat-error *ngIf="lastName.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="lastName.hasError('minlength')">Min 2 characters</mat-error>
+            </mat-form-field>
+          </div>
+
+          <!-- Email -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Email address</mat-label>
+            <input matInput type="email" formControlName="email" />
+            <mat-icon matPrefix>email</mat-icon>
+            <mat-error *ngIf="email.hasError('required')">Required</mat-error>
+            <mat-error *ngIf="email.hasError('email')">Invalid email</mat-error>
+          </mat-form-field>
+
+          <!-- Phone -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Phone number</mat-label>
+            <input matInput type="tel" formControlName="phone"
+                   placeholder="+212 600 000 000" />
+            <mat-icon matPrefix>phone</mat-icon>
+            <mat-error *ngIf="phone.hasError('required')">Required</mat-error>
+            <mat-error *ngIf="phone.hasError('pattern')">Invalid phone number</mat-error>
+          </mat-form-field>
+
+          <!-- Password -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Password</mat-label>
+            <input matInput
+                   [type]="hidePassword ? 'password' : 'text'"
+                   formControlName="password" />
+            <mat-icon matPrefix>lock</mat-icon>
+            <button mat-icon-button matSuffix type="button"
+                    (click)="hidePassword = !hidePassword">
+              <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-hint>Min 8 chars, upper/lower/number/special</mat-hint>
+            <mat-error *ngIf="password.hasError('required')">Required</mat-error>
+            <mat-error *ngIf="password.hasError('minlength')">Min 8 characters</mat-error>
+            <mat-error *ngIf="password.hasError('pattern')">
+              Must include uppercase, lowercase, number & special character
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Confirm Password -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Confirm password</mat-label>
+            <input matInput
+                   [type]="hideConfirm ? 'password' : 'text'"
+                   formControlName="confirmPassword" />
+            <mat-icon matPrefix>lock_outline</mat-icon>
+            <button mat-icon-button matSuffix type="button"
+                    (click)="hideConfirm = !hideConfirm">
+              <mat-icon>{{ hideConfirm ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+            <mat-error *ngIf="confirmPassword.hasError('required')">Required</mat-error>
+            <mat-error *ngIf="form.hasError('passwordMismatch')
+                              && confirmPassword.touched">
+              Passwords do not match
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Submit -->
+          <button mat-flat-button
+                  color="primary"
+                  type="submit"
+                  class="submit-btn"
+                  [disabled]="loading">
+            <mat-spinner *ngIf="loading" diameter="20" color="accent" />
+            <span *ngIf="!loading">Create Account</span>
+          </button>
+
+        </form>
+
+        <!-- Sign in link -->
+        <p class="auth-link">
+          Already have an account?
+          <a routerLink="/login">Sign in</a>
+        </p>
+
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>
