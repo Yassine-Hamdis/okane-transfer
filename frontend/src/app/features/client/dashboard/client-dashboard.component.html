@@ -1,0 +1,184 @@
+<div class="page-container">
+
+  <!-- Welcome -->
+  <div class="welcome-banner mb-24" *ngIf="profile">
+    <div class="welcome-left">
+      <div class="welcome-avatar">
+        {{ profile.firstName[0] }}{{ profile.lastName[0] }}
+      </div>
+      <div>
+        <h1>{{ greeting }}, {{ profile.firstName }}! 👋</h1>
+        <p class="text-muted">{{ today | date:'fullDate' }}</p>
+      </div>
+    </div>
+    <a mat-stroked-button routerLink="/client/track">
+      <mat-icon>track_changes</mat-icon>
+      Track Transfer
+    </a>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <ng-container *ngIf="!loading">
+
+    <!-- ── Stats ──────────────────────────────────────────────────────────── -->
+    <div class="stats-grid mb-24">
+      <mat-card class="stat-card">
+        <div class="stat-icon" style="background:#e8eaf6">
+          <mat-icon style="color:#3949ab">receipt_long</mat-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.total }}</span>
+          <span class="stat-label">Total Transfers</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon" style="background:#e3f2fd">
+          <mat-icon style="color:#0277bd">pending_actions</mat-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.pending }}</span>
+          <span class="stat-label">Pending</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon" style="background:#e8f5e9">
+          <mat-icon style="color:#2e7d32">check_circle</mat-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.paid }}</span>
+          <span class="stat-label">Completed</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <div class="stat-icon" style="background:#ffebee">
+          <mat-icon style="color:#c62828">cancel</mat-icon>
+        </div>
+        <div class="stat-body">
+          <span class="stat-value">{{ stats.cancelled }}</span>
+          <span class="stat-label">Cancelled</span>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- ── Bottom grid ────────────────────────────────────────────────────── -->
+    <div class="dashboard-grid">
+
+      <!-- Recent transfers -->
+      <mat-card class="transfers-card">
+        <mat-card-header>
+          <mat-card-title>Recent Transfers</mat-card-title>
+          <span class="spacer"></span>
+          <a mat-button color="primary" routerLink="/client/transfers">
+            View all
+          </a>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="transfer-list">
+            <div class="transfer-item"
+                 *ngFor="let t of recentTransfers"
+                 [routerLink]="['/client/transfers', t.id]">
+              <div class="transfer-left">
+                <div class="transfer-avatar">
+                  {{ t.recipientFullName[0] }}
+                </div>
+                <div class="transfer-info">
+                  <span class="transfer-recipient">{{ t.recipientFullName }}</span>
+                  <span class="transfer-date text-muted">
+                    {{ t.createdAt | date:'mediumDate' }}
+                  </span>
+                </div>
+              </div>
+              <div class="transfer-right">
+                <span class="transfer-amount">
+                  {{ t.sentAmount | currencyFormat:t.sentCurrency }}
+                </span>
+                <app-status-badge [status]="t.status" />
+              </div>
+            </div>
+
+            <div class="empty-transfers" *ngIf="recentTransfers.length === 0">
+              <mat-icon>inbox</mat-icon>
+              <p>No transfers yet</p>
+              <p class="text-muted">Your transfer history will appear here</p>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Notifications panel -->
+      <div class="side-panel">
+
+        <!-- Unread notifications -->
+        <mat-card class="notif-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>notifications</mat-icon>
+              Notifications
+            </mat-card-title>
+            <span class="spacer"></span>
+            <a mat-button color="primary" routerLink="/client/notifications">
+              View all
+            </a>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="notif-list">
+              <div class="notif-item"
+                   *ngFor="let n of unreadNotifs">
+                <div class="notif-dot"></div>
+                <div class="notif-body">
+                  <p class="notif-title">{{ n.title }}</p>
+                  <p class="notif-msg text-muted">{{ n.message }}</p>
+                  <p class="notif-time text-muted">
+                    {{ n.sentAt | date:'shortTime' }}
+                  </p>
+                </div>
+              </div>
+              <div class="empty-notifs" *ngIf="unreadNotifs.length === 0">
+                <mat-icon>notifications_none</mat-icon>
+                <p>No unread notifications</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Quick actions -->
+        <mat-card class="quick-card">
+          <mat-card-header>
+            <mat-card-title>Quick Actions</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="quick-links">
+              <a class="quick-link" routerLink="/client/track">
+                <div class="ql-icon" style="background:#e8eaf6">
+                  <mat-icon style="color:#3949ab">track_changes</mat-icon>
+                </div>
+                <span>Track Transfer</span>
+                <mat-icon class="ql-arrow">chevron_right</mat-icon>
+              </a>
+              <a class="quick-link" routerLink="/client/notifications">
+                <div class="ql-icon" style="background:#fff3e0">
+                  <mat-icon style="color:#e65100">notifications</mat-icon>
+                </div>
+                <span>Notifications</span>
+                <mat-icon class="ql-arrow">chevron_right</mat-icon>
+              </a>
+              <a class="quick-link" routerLink="/client/profile">
+                <div class="ql-icon" style="background:#e8f5e9">
+                  <mat-icon style="color:#2e7d32">manage_accounts</mat-icon>
+                </div>
+                <span>My Profile</span>
+                <mat-icon class="ql-arrow">chevron_right</mat-icon>
+              </a>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </div>
+
+  </ng-container>
+</div>
