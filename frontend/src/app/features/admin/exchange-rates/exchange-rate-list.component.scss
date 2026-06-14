@@ -1,0 +1,21 @@
+.form-panel    { border-radius: 12px !important; }
+.mb-24         { margin-bottom: 24px; }
+.table-filters { padding: 16px 16px 0; }
+.corridor-select { width: 420px; }
+.table-wrapper { overflow-x: auto; }
+.form-actions  { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+
+.no-corridor {
+  text-align: center; padding: 48px; color: var(--okane-text-light);
+  mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.2; display: block; margin: 0 auto 8px; }
+  p { margin: 0; }
+}
+
+.rate-value { font-size: 1rem; color: var(--okane-primary); }
+
+.code-chip {
+  background: #e8eaf6; color: var(--okane-primary);
+  padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;
+}
+
+.current-row td { background: #f0f4ff; }
