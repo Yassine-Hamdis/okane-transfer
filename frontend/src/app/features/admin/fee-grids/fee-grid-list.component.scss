@@ -1,0 +1,13 @@
+.form-panel    { border-radius: 12px !important; }
+.mb-24         { margin-bottom: 24px; }
+.table-filters { padding: 16px 16px 0; }
+.search-field  { width: 320px; }
+.table-wrapper { overflow-x: auto; }
+.form-actions  { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+.type-chip {
+  padding: 3px 10px; border-radius: 12px;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  &.type-standard     { background: #e8eaf6; color: #3949ab; }
+  &.type-express      { background: #fff3e0; color: #e65100; }
+  &.type-mobile_money { background: #e8f5e9; color: #2e7d32; }
+}
