@@ -1,0 +1,99 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <div class="header-left">
+      <a mat-icon-button routerLink="/admin/users">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <h1>{{ isEditMode ? 'Edit User' : 'New User' }}</h1>
+    </div>
+  </div>
+
+  <mat-card class="form-card">
+    <mat-card-content>
+
+      <app-loading-spinner *ngIf="loading" />
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!loading" novalidate>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>First name</mat-label>
+            <input matInput formControlName="firstName" />
+            <mat-error *ngIf="firstName.hasError('required')">Required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Last name</mat-label>
+            <input matInput formControlName="lastName" />
+            <mat-error *ngIf="lastName.hasError('required')">Required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" />
+            <mat-icon matPrefix>email</mat-icon>
+            <mat-error *ngIf="email.hasError('required')">Required</mat-error>
+            <mat-error *ngIf="email.hasError('email')">Invalid email</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Phone</mat-label>
+            <input matInput formControlName="phone" />
+            <mat-icon matPrefix>phone</mat-icon>
+            <mat-error *ngIf="phone.hasError('required')">Required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Role</mat-label>
+            <mat-select formControlName="role">
+              <mat-option *ngFor="let r of roles" [value]="r.value">
+                {{ r.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="needsAgency()">
+            <mat-label>Agency</mat-label>
+            <mat-select formControlName="agencyId">
+              <mat-option [value]="null">— None —</mat-option>
+              <mat-option *ngFor="let a of agencies" [value]="a.id">
+                {{ a.name }} ({{ a.city }})
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Password (create only) -->
+        <mat-form-field appearance="outline" class="full-width" *ngIf="!isEditMode">
+          <mat-label>Password</mat-label>
+          <input matInput
+                 [type]="hidePassword ? 'password' : 'text'"
+                 formControlName="password" />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix type="button"
+                  (click)="hidePassword = !hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error>Min 8 characters required</mat-error>
+        </mat-form-field>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button mat-stroked-button type="button" routerLink="/admin/users">
+            Cancel
+          </button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+            <mat-spinner *ngIf="saving" diameter="18"/>
+            <span *ngIf="!saving">{{ isEditMode ? 'Update User' : 'Create User' }}</span>
+          </button>
+        </div>
+
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,46 @@
+.user-card { max-width: 640px; border-radius: 16px !important; }
+
+.user-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 16px 20px;
+
+  h2 { font-size: 1.3rem; font-weight: 700; margin: 0 0 4px; }
+  p  { margin: 0; }
+}
+
+.user-avatar-lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--okane-primary-dk), var(--okane-primary));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.role-chip {
+  display: inline-block;
+  background: #e8eaf6; color: var(--okane-primary);
+  padding: 3px 10px; border-radius: 12px;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+}
+
+.user-details { padding: 8px 16px 16px; }
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--okane-border);
+  font-size: 0.875rem;
+
+  span { color: var(--okane-text-light); font-size: 0.8rem; }
+  &:last-child { border-bottom: none; }
+}

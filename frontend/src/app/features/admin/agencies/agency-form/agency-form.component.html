@@ -1,0 +1,59 @@
+<div class="page-container">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <a mat-icon-button routerLink="/admin/agencies">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <h1>{{ isEditMode ? 'Edit Agency' : 'New Agency' }}</h1>
+    </div>
+  </div>
+
+  <mat-card style="max-width:720px;border-radius:12px !important">
+    <mat-card-content>
+      <app-loading-spinner *ngIf="loading" />
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!loading">
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Agency Name</mat-label>
+            <input matInput formControlName="name" />
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city" />
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" style="width:100%">
+          <mat-label>Address</mat-label>
+          <input matInput formControlName="address" />
+          <mat-error>Required</mat-error>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Country</mat-label>
+            <mat-select formControlName="countryId">
+              <mat-option *ngFor="let c of countries" [value]="c.id">{{ c.name }}</mat-option>
+            </mat-select>
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Daily Limit</mat-label>
+            <input matInput type="number" formControlName="dailyLimit" />
+            <mat-error>Required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:8px">
+          <button mat-stroked-button type="button" routerLink="/admin/agencies">Cancel</button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+            {{ isEditMode ? 'Update Agency' : 'Create Agency' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

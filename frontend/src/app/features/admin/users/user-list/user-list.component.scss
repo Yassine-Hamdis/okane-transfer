@@ -1,0 +1,49 @@
+.table-filters {
+  display: flex;
+  gap: 16px;
+  padding: 16px 16px 0;
+  flex-wrap: wrap;
+}
+
+.search-field { flex: 1; min-width: 260px; }
+.role-filter  { width: 180px; }
+
+.table-wrapper { overflow-x: auto; }
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.user-name { font-weight: 500; font-size: 0.9rem; }
+
+.role-chip {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.no-data {
+  text-align: center;
+  padding: 48px;
+  color: var(--okane-text-light);
+
+  mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.3; display: block; margin: 0 auto 8px; }
+  p { margin: 0; }
+}
