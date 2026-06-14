@@ -1,0 +1,123 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Corridors</h1>
+        <button mat-flat-button color="primary" (click)="openCreate()">
+            <mat-icon>add</mat-icon> Add Corridor
+        </button>
+    </div>
+
+    <!-- Inline form -->
+    <mat-card class="form-panel mb-24" *ngIf="showForm">
+        <mat-card-header>
+            <mat-card-title>New Corridor</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                <div class="form-row">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Source Country</mat-label>
+                        <mat-select formControlName="sourceCountryId">
+                            <mat-option *ngFor="let c of countries" [value]="c.id">{{ c.name }}</mat-option>
+                        </mat-select>
+                        <mat-error>Required</mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Destination Country</mat-label>
+                        <mat-select formControlName="destinationCountryId">
+                            <mat-option *ngFor="let c of countries" [value]="c.id">{{ c.name }}</mat-option>
+                        </mat-select>
+                        <mat-error>Required</mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Source Currency</mat-label>
+                        <mat-select formControlName="sourceCurrencyId">
+                            <mat-option *ngFor="let c of currencies" [value]="c.id">{{ c.code }} — {{ c.name }}</mat-option>
+                        </mat-select>
+                        <mat-error>Required</mat-error>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Destination Currency</mat-label>
+                        <mat-select formControlName="destinationCurrencyId">
+                            <mat-option *ngFor="let c of currencies" [value]="c.id">{{ c.code }} — {{ c.name }}</mat-option>
+                        </mat-select>
+                        <mat-error>Required</mat-error>
+                    </mat-form-field>
+                </div>
+                <div class="form-actions">
+                    <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="saving">Create</button>
+                </div>
+            </form>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Table -->
+    <mat-card>
+        <div class="table-filters">
+            <mat-form-field appearance="outline" class="search-field">
+                <mat-label>Search corridors</mat-label>
+                <input matInput (input)="applyFilter($any($event.target).value)" />
+                <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+        </div>
+
+        <app-loading-spinner *ngIf="loading" [inline]="true" />
+
+        <div class="table-wrapper" *ngIf="!loading">
+            <table mat-table [dataSource]="dataSource">
+
+                <ng-container matColumnDef="corridor">
+                    <th mat-header-cell *matHeaderCellDef>Corridor</th>
+                    <td mat-cell *matCellDef="let c">
+                        <div class="corridor-cell">
+                            <span class="country">{{ c.sourceCountryName }}</span>
+                            <mat-icon class="arrow">arrow_forward</mat-icon>
+                            <span class="country">{{ c.destinationCountryName }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="currencies">
+                    <th mat-header-cell *matHeaderCellDef>Currencies</th>
+                    <td mat-cell *matCellDef="let c">
+                        <code class="code-chip">{{ c.sourceCurrencyCode }}</code>
+                        <mat-icon class="small-arrow">arrow_forward</mat-icon>
+                        <code class="code-chip">{{ c.destinationCurrencyCode }}</code>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let c">
+                        <app-status-badge [status]="c.active ? 'ACTIVE' : 'INACTIVE'" />
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="createdAt">
+                    <th mat-header-cell *matHeaderCellDef>Created</th>
+                    <td mat-cell *matCellDef="let c">{{ c.createdAt | date:'mediumDate' }}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Actions</th>
+                    <td mat-cell *matCellDef="let c">
+                        <button mat-icon-button
+                                [matTooltip]="c.active ? 'Deactivate' : 'Activate'"
+                                (click)="toggle(c)">
+                            <mat-icon [color]="c.active ? 'warn' : 'primary'">
+                                {{ c.active ? 'toggle_off' : 'toggle_on' }}
+                            </mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+        </div>
+        <mat-paginator [pageSizeOptions]="[10, 25]" showFirstLastButtons />
+    </mat-card>
+</div>

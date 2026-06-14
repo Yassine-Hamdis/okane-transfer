@@ -1,0 +1,23 @@
+.form-panel    { border-radius: 12px !important; }
+.mb-24         { margin-bottom: 24px; }
+.table-filters { padding: 16px 16px 0; }
+.search-field  { width: 320px; }
+.table-wrapper { overflow-x: auto; }
+.form-actions  { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+
+.corridor-cell {
+  display: flex; align-items: center; gap: 8px;
+  .country  { font-weight: 600; }
+  .arrow    { font-size: 18px; width: 18px; height: 18px; color: var(--okane-text-light); }
+}
+
+.code-chip {
+  background: #e8eaf6; color: var(--okane-primary);
+  padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;
+}
+
+.small-arrow {
+  font-size: 14px; width: 14px; height: 14px;
+  color: var(--okane-text-light); vertical-align: middle;
+  margin: 0 4px;
+}
