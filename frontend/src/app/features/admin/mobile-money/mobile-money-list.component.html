@@ -1,0 +1,100 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Mobile Money</h1>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <mat-card *ngIf="!loading">
+    <mat-tab-group>
+
+      <!-- Pending tab -->
+      <mat-tab [label]="'Pending (' + pending.length + ')'">
+        <ng-container *ngTemplateOutlet="mmTable; context: { records: pending, showReconcile: true }" />
+      </mat-tab>
+
+      <!-- Sent tab -->
+      <mat-tab [label]="'Sent (' + sent.length + ')'">
+        <ng-container *ngTemplateOutlet="mmTable; context: { records: sent, showReconcile: false }" />
+      </mat-tab>
+
+    </mat-tab-group>
+  </mat-card>
+</div>
+
+<ng-template #mmTable let-records="records" let-showReconcile="showReconcile">
+  <div class="table-wrapper">
+    <table mat-table [dataSource]="records">
+
+      <ng-container matColumnDef="withdrawalCode">
+        <th mat-header-cell *matHeaderCellDef>Transfer Code</th>
+        <td mat-cell *matCellDef="let m">
+          <code class="code-chip">{{ m.withdrawalCode }}</code>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="operator">
+        <th mat-header-cell *matHeaderCellDef>Operator</th>
+        <td mat-cell *matCellDef="let m">
+          <span class="operator-chip"
+                [style.background]="getOperatorColor(m.operator) + '22'"
+                [style.color]="getOperatorColor(m.operator)">
+            {{ m.operator.replace('_', ' ') }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="walletPhone">
+        <th mat-header-cell *matHeaderCellDef>Wallet Phone</th>
+        <td mat-cell *matCellDef="let m">{{ m.walletPhone }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let m">
+          <app-status-badge [status]="m.status" />
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="reference">
+        <th mat-header-cell *matHeaderCellDef>Reference</th>
+        <td mat-cell *matCellDef="let m">{{ m.operatorReference ?? '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="sentAt">
+        <th mat-header-cell *matHeaderCellDef>Sent At</th>
+        <td mat-cell *matCellDef="let m">{{ m.sentAt ? (m.sentAt | date:'shortDate') : '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="reconciledAt">
+        <th mat-header-cell *matHeaderCellDef>Reconciled At</th>
+        <td mat-cell *matCellDef="let m">
+          {{ m.reconciledAt ? (m.reconciledAt | date:'shortDate') : '—' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Action</th>
+        <td mat-cell *matCellDef="let m">
+          <button mat-flat-button
+                  color="primary"
+                  *ngIf="showReconcile && m.status === 'SENT'"
+                  (click)="reconcile(m)">
+            Reconcile
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell"
+            [attr.colspan]="displayedColumns.length"
+            style="text-align:center;padding:40px;color:var(--okane-text-light)">
+          No records
+        </td>
+      </tr>
+    </table>
+  </div>
+</ng-template>

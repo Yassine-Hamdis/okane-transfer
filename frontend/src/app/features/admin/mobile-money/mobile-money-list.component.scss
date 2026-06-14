@@ -1,0 +1,9 @@
+.table-wrapper { overflow-x: auto; padding: 8px; }
+.code-chip {
+  background: #e8eaf6; color: var(--okane-primary);
+  padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;
+}
+.operator-chip {
+  padding: 3px 10px; border-radius: 12px;
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+}
