@@ -1,0 +1,10 @@
+.form-panel  { border-radius: 12px !important; }
+.table-filters { padding: 16px 16px 0; }
+.search-field  { width: 320px; }
+.table-wrapper { overflow-x: auto; }
+.mb-24         { margin-bottom: 24px; }
+.form-actions  { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
+.code-chip {
+  background: #e8eaf6; color: var(--okane-primary);
+  padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;
+}
