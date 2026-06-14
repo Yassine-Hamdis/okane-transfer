@@ -1,0 +1,153 @@
+<div class="page-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Users</h1>
+    <a mat-flat-button color="primary" routerLink="/admin/users/new">
+      <mat-icon>add</mat-icon> Add User
+    </a>
+  </div>
+
+  <mat-card>
+
+    <!-- Filters -->
+    <div class="table-filters">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search users</mat-label>
+        <input matInput
+               [(ngModel)]="searchValue"
+               (ngModelChange)="applySearch($event)"
+               placeholder="Name, email or phone..." />
+        <mat-icon matPrefix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="role-filter">
+        <mat-label>Role</mat-label>
+        <mat-select [(ngModel)]="roleFilter" (ngModelChange)="applyRoleFilter()">
+          <mat-option *ngFor="let r of roleOptions" [value]="r.value">
+            {{ r.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <!-- Loading -->
+    <app-loading-spinner *ngIf="loading" [inline]="true" />
+
+    <!-- Table -->
+    <div class="table-wrapper" *ngIf="!loading">
+      <table mat-table [dataSource]="dataSource" matSort>
+
+        <!-- Name -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let u">
+            <div class="user-cell">
+              <div class="user-avatar" [style.background]="getRoleColor(u.role) + '22'">
+                <span [style.color]="getRoleColor(u.role)">
+                  {{ u.firstName[0] }}{{ u.lastName[0] }}
+                </span>
+              </div>
+              <div>
+                <div class="user-name">{{ u.firstName }} {{ u.lastName }}</div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Email -->
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+          <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+        </ng-container>
+
+        <!-- Phone -->
+        <ng-container matColumnDef="phone">
+          <th mat-header-cell *matHeaderCellDef>Phone</th>
+          <td mat-cell *matCellDef="let u">{{ u.phone }}</td>
+        </ng-container>
+
+        <!-- Role -->
+        <ng-container matColumnDef="role">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Role</th>
+          <td mat-cell *matCellDef="let u">
+            <span class="role-chip"
+                  [style.background]="getRoleColor(u.role) + '22'"
+                  [style.color]="getRoleColor(u.role)">
+              {{ getRoleLabel(u.role) }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Agency -->
+        <ng-container matColumnDef="agency">
+          <th mat-header-cell *matHeaderCellDef>Agency</th>
+          <td mat-cell *matCellDef="let u">
+            {{ u.agencyName ?? '—' }}
+          </td>
+        </ng-container>
+
+        <!-- Status -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let u">
+            <app-status-badge [status]="u.active ? 'ACTIVE' : 'INACTIVE'" />
+          </td>
+        </ng-container>
+
+        <!-- Created At -->
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Joined</th>
+          <td mat-cell *matCellDef="let u">{{ u.createdAt | date:'mediumDate' }}</td>
+        </ng-container>
+
+        <!-- Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let u">
+            <button mat-icon-button
+                    [routerLink]="['/admin/users', u.id]"
+                    matTooltip="View details">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button
+                    [routerLink]="['/admin/users', u.id]"
+                    [queryParams]="{ edit: true }"
+                    matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button [matMenuTriggerFor]="menu">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="activate(u)" *ngIf="!u.active">
+                <mat-icon color="primary">check_circle</mat-icon> Activate
+              </button>
+              <button mat-menu-item (click)="suspend(u)" *ngIf="u.active">
+                <mat-icon color="warn">pause_circle</mat-icon> Suspend
+              </button>
+              <button mat-menu-item (click)="resetPassword(u)">
+                <mat-icon>lock_reset</mat-icon> Reset Password
+              </button>
+            </mat-menu>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <!-- No data -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+            <mat-icon>search_off</mat-icon>
+            <p>No users found</p>
+          </td>
+        </tr>
+
+      </table>
+    </div>
+
+    <mat-paginator [pageSizeOptions]="[10, 25, 50]"
+                   showFirstLastButtons />
+  </mat-card>
+</div>

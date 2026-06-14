@@ -1,0 +1,56 @@
+<div class="page-container">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <a mat-icon-button routerLink="/admin/users"><mat-icon>arrow_back</mat-icon></a>
+      <h1>User Detail</h1>
+    </div>
+    <div style="display:flex;gap:8px" *ngIf="user">
+      <a mat-stroked-button [routerLink]="['/admin/users', user.id]" [queryParams]="{edit:true}">
+        <mat-icon>edit</mat-icon> Edit
+      </a>
+      <button mat-stroked-button (click)="resetPassword()">
+        <mat-icon>lock_reset</mat-icon> Reset Password
+      </button>
+      <button mat-flat-button color="warn" *ngIf="user.active" (click)="suspend()">Suspend</button>
+      <button mat-flat-button color="primary" *ngIf="!user.active" (click)="activate()">Activate</button>
+    </div>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <mat-card class="user-card" *ngIf="!loading && user">
+
+    <!-- Avatar header -->
+    <div class="user-header">
+      <div class="user-avatar-lg">{{ getInitials() }}</div>
+      <div>
+        <h2>{{ user.firstName }} {{ user.lastName }}</h2>
+        <p class="text-muted">{{ user.email }}</p>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <span class="role-chip">{{ getRoleLabel() }}</span>
+          <app-status-badge [status]="user.active ? 'ACTIVE' : 'INACTIVE'" />
+        </div>
+      </div>
+    </div>
+
+    <mat-divider />
+
+    <div class="user-details">
+      <div class="detail-row"><span>Phone</span><strong>{{ user.phone }}</strong></div>
+      <div class="detail-row"><span>Agency</span><strong>{{ user.agencyName ?? '—' }}</strong></div>
+      <div class="detail-row">
+        <span>Two-Factor Auth</span>
+        <strong>{{ user.twoFactorEnabled ? 'Enabled' : 'Disabled' }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Must Change Password</span>
+        <strong>{{ user.mustChangePassword ? 'Yes' : 'No' }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Member Since</span>
+        <strong>{{ user.createdAt | date:'mediumDate' }}</strong>
+      </div>
+    </div>
+
+  </mat-card>
+</div>

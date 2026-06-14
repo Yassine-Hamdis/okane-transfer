@@ -1,0 +1,27 @@
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 800px) { grid-template-columns: 1fr; }
+}
+
+.info-card { border-radius: 12px !important; }
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--okane-border);
+  font-size: 0.875rem;
+
+  span { color: var(--okane-text-light); font-size: 0.8rem; }
+  &:last-child { border-bottom: none; }
+}
+
+.code-chip {
+  background: #e8eaf6; color: var(--okane-primary);
+  padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;
+}

@@ -1,0 +1,211 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+}
+
+// ── Left branding panel ───────────────────────────────────────────────────────
+.auth-brand {
+  flex: 1;
+  background: linear-gradient(135deg, var(--okane-primary-dk) 0%, var(--okane-primary) 60%, #5c6bc0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  position: relative;
+  overflow: hidden;
+
+  // Decorative circles
+  &::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    top: -100px;
+    right: -100px;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    bottom: -80px;
+    left: -80px;
+  }
+
+  @media (max-width: 768px) { display: none; }
+}
+
+.brand-content {
+  text-align: center;
+  color: #fff;
+  position: relative;
+  z-index: 1;
+}
+
+.brand-logo {
+  width: 72px;
+  height: 72px;
+  background: var(--okane-accent);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #fff;
+  }
+}
+
+.brand-content h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+
+.brand-content > p {
+  font-size: 1rem;
+  opacity: 0.8;
+  margin-bottom: 40px;
+}
+
+.brand-features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.1);
+  padding: 12px 16px;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+
+  mat-icon {
+    color: var(--okane-accent);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  span {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+}
+
+// ── Right form panel ──────────────────────────────────────────────────────────
+.auth-form-panel {
+  width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background: var(--okane-bg);
+
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 32px 20px;
+  }
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10) !important;
+  padding: 8px;
+}
+
+.card-header {
+  padding: 8px 0 16px;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--okane-text);
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    color: var(--okane-text-light);
+    font-size: 0.9rem;
+  }
+}
+
+// ── Error alert ───────────────────────────────────────────────────────────────
+.error-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffebee;
+  color: var(--okane-danger);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.875rem;
+  border-left: 4px solid var(--okane-danger);
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
+}
+
+// ── Form ──────────────────────────────────────────────────────────────────────
+.full-width { width: 100%; margin-bottom: 4px; }
+
+.submit-btn {
+  width: 100%;
+  height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 8px;
+  border-radius: 8px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+// ── Links ─────────────────────────────────────────────────────────────────────
+.auth-link {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.875rem;
+  color: var(--okane-text-light);
+
+  a {
+    color: var(--okane-primary);
+    font-weight: 600;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+
+  &.secondary {
+    margin-top: 12px;
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+      font-size: 0.825rem;
+      color: var(--okane-text-light);
+
+      mat-icon { font-size: 16px; width: 16px; height: 16px; }
+      &:hover { color: var(--okane-primary); }
+    }
+  }
+}
