@@ -1,0 +1,154 @@
+.sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--okane-primary-dk) 0%, var(--okane-primary) 100%);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+
+  &.collapsed {
+    width: 68px;
+
+    .brand-logo { margin: 0 auto; }
+    .collapse-btn { margin-left: 0; }
+  }
+}
+
+// ── Brand ────────────────────────────────────────────────────────────────────
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--okane-accent);
+  border-radius: 8px;
+  flex-shrink: 0;
+
+  mat-icon {
+    color: #fff;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.brand-name {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.collapse-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+
+  mat-icon {
+    color: rgba(255,255,255,0.7);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover mat-icon { color: #fff; }
+}
+
+// ── Role chip ────────────────────────────────────────────────────────────────
+.role-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 16px;
+  padding: 6px 12px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 20px;
+
+  .role-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: var(--okane-accent);
+  }
+
+  span {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+}
+
+// ── Nav items ────────────────────────────────────────────────────────────────
+.sidebar-nav {
+  flex: 1;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+  }
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.75);
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+
+  .nav-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .nav-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+  }
+
+  &.active {
+    background: var(--okane-accent);
+    color: #fff;
+
+    .nav-icon { color: #fff; }
+  }
+}

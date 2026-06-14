@@ -1,0 +1,107 @@
+<mat-toolbar class="navbar">
+
+  <!-- ── Sidebar toggle ──────────────────────────────────────────────────── -->
+  <button mat-icon-button
+          class="toggle-btn"
+          (click)="onToggleSidebar()"
+          aria-label="Toggle sidebar">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <!-- ── Page title area ────────────────────────────────────────────────── -->
+  <span class="navbar-title">OkaneTransfer</span>
+
+  <span class="spacer"></span>
+
+  <!-- ── Notifications bell (Client only) ───────────────────────────────── -->
+  <ng-container *ngIf="isClient">
+    <button mat-icon-button
+            class="notif-btn"
+            [matMenuTriggerFor]="notifMenu"
+            (menuOpened)="openNotifications()"
+            aria-label="Notifications">
+      <mat-icon
+        [matBadge]="unreadCount > 0 ? unreadCount : null"
+        matBadgeColor="warn"
+        matBadgeSize="small">
+        notifications
+      </mat-icon>
+    </button>
+
+    <!-- Notifications dropdown -->
+    <mat-menu #notifMenu="matMenu" class="notif-menu" xPosition="before">
+      <div class="notif-header" (click)="$event.stopPropagation()">
+        <span class="notif-title">Notifications</span>
+        <button mat-button
+                color="primary"
+                class="mark-all-btn"
+                *ngIf="recentNotifs.length > 0"
+                (click)="markAllRead()">
+          Mark all read
+        </button>
+      </div>
+
+      <mat-divider />
+
+      <div class="notif-empty"
+           *ngIf="recentNotifs.length === 0"
+           (click)="$event.stopPropagation()">
+        <mat-icon>notifications_none</mat-icon>
+        <p>No unread notifications</p>
+      </div>
+
+      <div *ngFor="let notif of recentNotifs"
+           class="notif-item"
+           [class.unread]="!notif.read"
+           (click)="markRead(notif.id); $event.stopPropagation()">
+        <mat-icon class="notif-icon">
+          {{ notif.channel === 'EMAIL' ? 'email'
+           : notif.channel === 'SMS'   ? 'sms'
+           : 'notifications' }}
+        </mat-icon>
+        <div class="notif-body">
+          <p class="notif-item-title">{{ notif.title }}</p>
+          <p class="notif-item-msg">{{ notif.message }}</p>
+          <p class="notif-item-time">{{ notif.sentAt | date:'short' }}</p>
+        </div>
+        <span class="unread-dot" *ngIf="!notif.read"></span>
+      </div>
+
+      <mat-divider *ngIf="recentNotifs.length > 0" />
+
+      <a mat-menu-item routerLink="/client/notifications">
+        <mat-icon>open_in_new</mat-icon>
+        View all notifications
+      </a>
+    </mat-menu>
+  </ng-container>
+
+  <!-- ── User menu ──────────────────────────────────────────────────────── -->
+  <button mat-button
+          class="user-btn"
+          [matMenuTriggerFor]="userMenu">
+    <div class="avatar">{{ getInitials() }}</div>
+    <div class="user-info">
+      <span class="user-name">{{ fullName }}</span>
+      <span class="user-role">{{ roleLabel }}</span>
+    </div>
+    <mat-icon>arrow_drop_down</mat-icon>
+  </button>
+
+  <mat-menu #userMenu="matMenu" xPosition="before">
+    <a mat-menu-item routerLink="/client/profile" *ngIf="isClient">
+      <mat-icon>manage_accounts</mat-icon>
+      Profile
+    </a>
+    <a mat-menu-item routerLink="/client/change-password" *ngIf="isClient">
+      <mat-icon>lock</mat-icon>
+      Change Password
+    </a>
+    <mat-divider *ngIf="isClient" />
+    <button mat-menu-item (click)="logout()" class="logout-item">
+      <mat-icon>logout</mat-icon>
+      Logout
+    </button>
+  </mat-menu>
+
+</mat-toolbar>

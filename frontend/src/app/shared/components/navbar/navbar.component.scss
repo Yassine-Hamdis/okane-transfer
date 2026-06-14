@@ -1,0 +1,177 @@
+.navbar {
+  background: var(--okane-surface);
+  border-bottom: 1px solid var(--okane-border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  height: 64px;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  color: var(--okane-text);
+}
+
+.toggle-btn {
+  color: var(--okane-primary);
+  margin-right: 8px;
+}
+
+.navbar-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--okane-primary-dk);
+  letter-spacing: 0.3px;
+}
+
+.spacer { flex: 1 1 auto; }
+
+// ── Notifications ────────────────────────────────────────────────────────────
+.notif-btn {
+  margin-right: 8px;
+  color: var(--okane-text);
+
+  mat-icon { font-size: 24px; }
+}
+
+::ng-deep .notif-menu {
+  min-width: 340px !important;
+  max-width: 340px !important;
+  padding: 0 !important;
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.notif-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--okane-text);
+}
+
+.mark-all-btn {
+  font-size: 0.8rem;
+  height: 28px;
+  line-height: 28px;
+}
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  color: var(--okane-text-light);
+
+  mat-icon { font-size: 36px; width: 36px; height: 36px; opacity: 0.4; }
+  p { font-size: 0.85rem; margin-top: 8px; }
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+
+  &:hover { background: var(--okane-bg); }
+
+  &.unread { background: #f0f4ff; }
+
+  .notif-icon {
+    color: var(--okane-primary);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .notif-body { flex: 1; min-width: 0; }
+
+  .notif-item-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--okane-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .notif-item-msg {
+    font-size: 0.8rem;
+    color: var(--okane-text-light);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .notif-item-time {
+    font-size: 0.72rem;
+    color: var(--okane-text-light);
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+
+  .unread-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--okane-primary);
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+}
+
+// ── User button ──────────────────────────────────────────────────────────────
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 8px 0 4px;
+  border-radius: 8px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--okane-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+
+  @media (max-width: 600px) { display: none; }
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--okane-text);
+}
+
+.user-role {
+  font-size: 0.72rem;
+  color: var(--okane-text-light);
+}
+
+.logout-item {
+  color: var(--okane-danger) !important;
+  mat-icon { color: var(--okane-danger) !important; }
+}

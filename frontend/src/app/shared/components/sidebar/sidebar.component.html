@@ -1,0 +1,35 @@
+<aside class="sidebar" [class.collapsed]="collapsed">
+
+  <!-- ── Brand ──────────────────────────────────────────────────────────── -->
+  <div class="sidebar-brand">
+    <div class="brand-logo">
+      <mat-icon>account_balance</mat-icon>
+    </div>
+    <span class="brand-name" *ngIf="!collapsed">OkaneTransfer</span>
+    <button class="collapse-btn" (click)="onToggle()" matRipple>
+      <mat-icon>{{ collapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- ── Role chip ──────────────────────────────────────────────────────── -->
+  <div class="role-chip" *ngIf="!collapsed">
+    <mat-icon class="role-icon">shield</mat-icon>
+    <span>{{ roleName }}</span>
+  </div>
+
+  <!-- ── Navigation items ───────────────────────────────────────────────── -->
+  <nav class="sidebar-nav">
+    <a
+      *ngFor="let item of visibleItems"
+      class="nav-item"
+      [routerLink]="item.route"
+      routerLinkActive="active"
+      matRipple
+      [matTooltip]="collapsed ? item.label : ''"
+      matTooltipPosition="right">
+      <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+      <span class="nav-label" *ngIf="!collapsed">{{ item.label }}</span>
+    </a>
+  </nav>
+
+</aside>
