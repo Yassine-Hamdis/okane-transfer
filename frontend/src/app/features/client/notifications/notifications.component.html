@@ -1,0 +1,72 @@
+<div class="page-container">
+
+  <div class="page-header">
+    <h1>Notifications</h1>
+    <button mat-stroked-button
+            (click)="markAllRead()"
+            *ngIf="unread.length > 0">
+      <mat-icon>done_all</mat-icon>
+      Mark all as read
+    </button>
+  </div>
+
+  <app-loading-spinner *ngIf="loading" />
+
+  <mat-card *ngIf="!loading">
+    <mat-tab-group>
+
+      <!-- All tab -->
+      <mat-tab [label]="'All (' + all.length + ')'">
+        <ng-container *ngTemplateOutlet="notifList; context: { notifs: all }" />
+      </mat-tab>
+
+      <!-- Unread tab -->
+      <mat-tab [label]="'Unread (' + unread.length + ')'">
+        <ng-container *ngTemplateOutlet="notifList; context: { notifs: unread }" />
+      </mat-tab>
+
+    </mat-tab-group>
+  </mat-card>
+
+</div>
+
+<!-- Notification list template -->
+<ng-template #notifList let-notifs="notifs">
+  <div class="notif-list">
+
+    <div class="empty-state" *ngIf="notifs.length === 0">
+      <mat-icon>notifications_none</mat-icon>
+      <p>No notifications here</p>
+    </div>
+
+    <div class="notif-item"
+         *ngFor="let n of notifs"
+         [class.unread]="!n.read"
+         (click)="markRead(n)">
+
+      <!-- Channel icon -->
+      <div class="notif-icon-wrap"
+           [class]="'channel-' + n.channel.toLowerCase()">
+        <mat-icon>{{ getChannelIcon(n.channel) }}</mat-icon>
+      </div>
+
+      <!-- Body -->
+      <div class="notif-body">
+        <div class="notif-header-row">
+          <p class="notif-title">{{ n.title }}</p>
+          <div class="unread-badge" *ngIf="!n.read"></div>
+        </div>
+        <p class="notif-msg">{{ n.message }}</p>
+        <div class="notif-meta">
+          <span class="channel-tag">{{ n.channel }}</span>
+          <span class="notif-time">{{ n.sentAt | date:'medium' }}</span>
+          <span class="read-at" *ngIf="n.read && n.readAt">
+            Read {{ n.readAt | date:'shortTime' }}
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</ng-template>
