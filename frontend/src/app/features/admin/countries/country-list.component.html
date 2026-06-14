@@ -1,0 +1,121 @@
+<div class="page-container">
+    <div class="page-header">
+        <h1>Countries</h1>
+        <button mat-flat-button color="primary" (click)="openCreateForm()">
+            <mat-icon>add</mat-icon> Add Country
+        </button>
+    </div>
+
+    <!-- Inline form panel -->
+    <mat-card class="form-panel mb-24" *ngIf="showForm">
+        <mat-card-header>
+            <mat-card-title>{{ editingId ? 'Edit Country' : 'New Country' }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+                <div class="form-row">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Country name</mat-label>
+                        <input matInput formControlName="name" />
+                        <mat-error>Required</mat-error>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                        <mat-label>ISO code (e.g. MA)</mat-label>
+                        <input matInput formControlName="code" maxlength="3" />
+                        <mat-error>Required, max 3 chars</mat-error>
+                    </mat-form-field>
+                </div>
+                <div class="toggle-row">
+                    <mat-slide-toggle formControlName="allowsSending" color="primary">
+                        Allows Sending
+                    </mat-slide-toggle>
+                    <mat-slide-toggle formControlName="allowsReceiving" color="primary">
+                        Allows Receiving
+                    </mat-slide-toggle>
+                </div>
+                <div class="form-actions">
+                    <button mat-stroked-button type="button" (click)="cancelForm()">Cancel</button>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+                        {{ editingId ? 'Update' : 'Create' }}
+                    </button>
+                </div>
+            </form>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Table -->
+    <mat-card>
+        <div class="table-filters">
+            <mat-form-field appearance="outline" class="search-field">
+                <mat-label>Search countries</mat-label>
+                <input matInput (input)="applyFilter($any($event.target).value)" />
+                <mat-icon matPrefix>search</mat-icon>
+            </mat-form-field>
+        </div>
+
+        <app-loading-spinner *ngIf="loading" [inline]="true" />
+
+        <div class="table-wrapper" *ngIf="!loading">
+            <table mat-table [dataSource]="dataSource">
+                <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef>Country</th>
+                    <td mat-cell *matCellDef="let c">
+                        <strong>{{ c.name }}</strong>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="code">
+                    <th mat-header-cell *matHeaderCellDef>Code</th>
+                    <td mat-cell *matCellDef="let c">
+                        <code class="code-chip">{{ c.code }}</code>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="sending">
+                    <th mat-header-cell *matHeaderCellDef>Sending</th>
+                    <td mat-cell *matCellDef="let c">
+                        <mat-icon [class]="c.allowsSending ? 'yes' : 'no'">
+                            {{ c.allowsSending ? 'check_circle' : 'cancel' }}
+                        </mat-icon>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="receiving">
+                    <th mat-header-cell *matHeaderCellDef>Receiving</th>
+                    <td mat-cell *matCellDef="let c">
+                        <mat-icon [class]="c.allowsReceiving ? 'yes' : 'no'">
+                            {{ c.allowsReceiving ? 'check_circle' : 'cancel' }}
+                        </mat-icon>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let c">
+                        <app-status-badge [status]="c.active ? 'ACTIVE' : 'INACTIVE'" />
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Actions</th>
+                    <td mat-cell *matCellDef="let c">
+                        <button mat-icon-button matTooltip="Edit" (click)="openEditForm(c)">
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button
+                                [matTooltip]="c.active ? 'Deactivate' : 'Activate'"
+                                (click)="toggle(c)">
+                            <mat-icon [color]="c.active ? 'warn' : 'primary'">
+                                {{ c.active ? 'toggle_off' : 'toggle_on' }}
+                            </mat-icon>
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+        </div>
+        <mat-paginator [pageSizeOptions]="[10, 25]" showFirstLastButtons />
+    </mat-card>
+</div>
