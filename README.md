@@ -118,6 +118,7 @@ The system implements role-based access control (RBAC) with four main profiles:
    - External API integration (GPT)
    - Intelligent decision support
    - Enhanced user experience
+<img width="3596" height="2262" alt="diagramme de cas utilisation complet" src="https://github.com/user-attachments/assets/775f682a-d313-4098-92a4-0465c302d102" />
 
 ---
 
