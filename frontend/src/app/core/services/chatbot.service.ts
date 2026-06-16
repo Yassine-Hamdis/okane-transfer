@@ -52,7 +52,7 @@ export class ChatbotService {
 
   getEscalated(): Observable<EscalatedConversation[]> {
     return this.http
-      .get<ApiResponse<EscalatedConversation[]>>(`${this.adminBase}/escalated`)
+      .get<ApiResponse<EscalatedConversation[]>>(`${this.base}/escalated`) // ← was this.adminBase
       .pipe(map(res => res.data!));
   }
 }

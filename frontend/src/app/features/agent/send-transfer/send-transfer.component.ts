@@ -34,6 +34,9 @@ import { FeeSimulationResponse, TransferType } from '../../../core/models/fee-gr
 import { Transfer }                from '../../../core/models/transfer.model';
 import { CurrencyFormatPipe }      from '../../../shared/pipes/currency-format.pipe';
 // import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { MobileMoneyService } from '../../../core/services/mobile-money.service';
+import { MobileMoneyOperator } from '../../../core/models/mobile-money.model';
+
 
 @Component({
   selector: 'app-send-transfer',
@@ -83,6 +86,13 @@ export class SendTransferComponent implements OnInit, OnDestroy {
     { value: 'MOBILE_MONEY', label: 'Mobile Money', icon: 'phone_android' },
   ];
 
+    // ── Mobile Money Operators ────────────────────────────────────────────────────
+  readonly mobileMoneyOperators: { value: MobileMoneyOperator; label: string }[] = [
+    { value: 'ORANGE_MONEY', label: 'Orange Money' },
+    { value: 'WAVE',         label: 'Wave' },
+    { value: 'M_PESA',       label: 'M-Pesa' },
+  ];
+
   // ── Success state ─────────────────────────────────────────────────────────────
   submitting        = false;
   createdTransfer:  Transfer | null = null;
@@ -96,6 +106,7 @@ export class SendTransferComponent implements OnInit, OnDestroy {
     private feeGridService:  FeeGridService,
     private transferService: TransferService,
     private countryService:  CountryService,
+    private mobileMoneyService: MobileMoneyService,
     private snackBar:        MatSnackBar,
   ) {}
 
@@ -134,7 +145,29 @@ export class SendTransferComponent implements OnInit, OnDestroy {
       recipientPhone:     ['', Validators.required],
       recipientCountryId: [null, Validators.required],
       notes:              [''],
+      // ── Mobile Money fields ──
+      mobileMoneyOperator: [null],
+      mobileMoneyWalletPhone: [''],
     });
+
+    // ── Add validators when MOBILE_MONEY is selected ──
+    this.corridorForm.get('transferType')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(type => {
+        const operatorControl = this.recipientForm.get('mobileMoneyOperator')!;
+        const walletControl = this.recipientForm.get('mobileMoneyWalletPhone')!;
+
+        if (type === 'MOBILE_MONEY') {
+          operatorControl.setValidators([Validators.required]);
+          walletControl.setValidators([Validators.required]);
+        } else {
+          operatorControl.clearValidators();
+          walletControl.clearValidators();
+        }
+
+        operatorControl.updateValueAndValidity();
+        walletControl.updateValueAndValidity();
+      });
   }
 
   // ── Data loading ──────────────────────────────────────────────────────────────
@@ -181,6 +214,14 @@ export class SendTransferComponent implements OnInit, OnDestroy {
 
   private runSimulation(): void {
     const { corridorId, transferType, sentAmount } = this.corridorForm.value;
+
+    // ── Skip simulation for MOBILE_MONEY ──
+    if (transferType === 'MOBILE_MONEY') {
+      this.simulation = null;
+      this.simulating = false;
+      return;
+    }
+
     if (!corridorId || !sentAmount || sentAmount <= 0) {
       this.simulation = null;
       return;
@@ -226,22 +267,72 @@ export class SendTransferComponent implements OnInit, OnDestroy {
 
     const corridor = this.corridors.find(c => c.id === cf.corridorId)!;
 
-    this.transferService.create({
+    // Build transfer payload - ALWAYS include sentCurrencyId
+    const transferPayload = {
       ...sf,
       ...rf,
-      corridorId:    cf.corridorId,
-      sentAmount:    cf.sentAmount,
-      sentCurrencyId: corridor.sourceCurrencyId,
-      transferType:  cf.transferType,
-    }).subscribe({
+      corridorId:      cf.corridorId,
+      sentAmount:      cf.sentAmount,
+      sentCurrencyId:  corridor.sourceCurrencyId, // ← Always include this
+      transferType:    cf.transferType,
+    };
+
+    console.log('🚀 Transfer Payload:', transferPayload);
+
+    // Create the base transfer first
+    this.transferService.create(transferPayload).subscribe({
       next: transfer => {
-        this.submitting      = false;
-        this.createdTransfer = transfer;
+        // If MOBILE_MONEY, create the mobile money record
+        if (cf.transferType === 'MOBILE_MONEY') {
+          this.createMobileMoneyRecord(transfer.id, rf);
+        } else {
+          this.submitting = false;
+          this.createdTransfer = transfer;
+        }
       },
       error: err => {
         this.submitting = false;
         this.snackBar.open(
           err.error?.message ?? 'Transfer failed', 'OK', { duration: 5000 }
+        );
+      },
+    });
+  }
+
+  private createMobileMoneyRecord(transferId: number, recipientData: any): void {
+    this.mobileMoneyService.create({
+      transferId,
+      operator:    recipientData.mobileMoneyOperator,
+      walletPhone: recipientData.mobileMoneyWalletPhone,
+    }).subscribe({
+      next: () => {
+        this.submitting = false;
+        // Fetch the transfer again to get the complete data
+        this.transferService.getById(transferId).subscribe({
+          next: transfer => {
+            this.createdTransfer = transfer;
+            this.snackBar.open(
+              'Mobile Money transfer created successfully!',
+              'OK',
+              { duration: 3000 }
+            );
+          },
+          error: () => {
+            // Even if we can't fetch, we know it was created
+            this.snackBar.open(
+              'Mobile Money transfer created!',
+              'OK',
+              { duration: 3000 }
+            );
+          }
+        });
+      },
+      error: err => {
+        this.submitting = false;
+        this.snackBar.open(
+          err.error?.message ?? 'Mobile Money creation failed',
+          'OK',
+          { duration: 5000 }
         );
       },
     });
@@ -258,9 +349,13 @@ export class SendTransferComponent implements OnInit, OnDestroy {
     this.recipientForm.reset();
   }
 
+  isMobileMoneySelected(): boolean {
+    return this.corridorForm.value.transferType === 'MOBILE_MONEY';
+  }
+
   getCorridorLabel(corridor: Corridor): string {
     return `${corridor.sourceCountryName} → ${corridor.destinationCountryName} `
-      + `(${corridor.sourceCurrencyCode} → ${corridor.destinationCurrencyCode})`;
+         + `(${corridor.sourceCurrencyCode} → ${corridor.destinationCurrencyCode})`;
   }
 
   getSenderCountryLabel(): string {
@@ -272,4 +367,8 @@ export class SendTransferComponent implements OnInit, OnDestroy {
     const id = this.recipientForm.value.recipientCountryId;
     return this.countries.find(c => c.id === id)?.name ?? '';
   }
+
+  isMobileMoneyTransfer(): boolean {
+  return this.createdTransfer?.transferType === 'MOBILE_MONEY';
+}
 }

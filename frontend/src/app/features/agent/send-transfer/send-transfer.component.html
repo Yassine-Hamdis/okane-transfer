@@ -12,13 +12,23 @@
           <mat-icon>check_circle</mat-icon>
         </div>
         <h2>Transfer Created!</h2>
-        <p>Share the withdrawal code with the recipient</p>
+        <p *ngIf="!isMobileMoneyTransfer()">Share the withdrawal code with the recipient</p>
+        <p *ngIf="isMobileMoneyTransfer()">Funds sent directly to mobile wallet</p>
       </div>
 
-      <!-- Withdrawal code (large, printable) -->
-      <div class="withdrawal-code-box">
+      <!-- Withdrawal code (only for STANDARD/EXPRESS) -->
+      <div class="withdrawal-code-box" *ngIf="!isMobileMoneyTransfer() && createdTransfer.withdrawalCode">
         <span class="wc-label">WITHDRAWAL CODE</span>
         <span class="wc-code">{{ createdTransfer.withdrawalCode }}</span>
+      </div>
+
+      <!-- Mobile Money confirmation (only for MOBILE_MONEY) -->
+      <div class="mobile-money-success-box" *ngIf="isMobileMoneyTransfer()">
+        <mat-icon>phone_android</mat-icon>
+        <div class="mm-success-content">
+          <h3>Mobile Money Transfer Initiated</h3>
+          <p>The funds will be sent to the recipient's mobile wallet shortly.</p>
+        </div>
       </div>
 
       <!-- Transfer breakdown -->
@@ -31,7 +41,7 @@
           <span>Recipient</span>
           <strong>{{ createdTransfer.recipientFullName }}</strong>
         </div>
-        <mat-divider />
+        <mat-divider></mat-divider>
         <div class="breakdown-row">
           <span>Amount Sent</span>
           <strong>{{ createdTransfer.sentAmount | currencyFormat:createdTransfer.sentCurrency }}</strong>
@@ -50,10 +60,25 @@
             {{ createdTransfer.receivedAmount | currencyFormat:createdTransfer.receivedCurrency }}
           </strong>
         </div>
-        <div class="breakdown-row">
+
+        <!-- Show expiry only for STANDARD/EXPRESS -->
+        <div class="breakdown-row" *ngIf="!isMobileMoneyTransfer()">
           <span>Expires At</span>
           <strong>{{ createdTransfer.expiresAt | date:'medium' }}</strong>
         </div>
+
+        <!-- Show mobile money details -->
+        <ng-container *ngIf="isMobileMoneyTransfer()">
+          <mat-divider></mat-divider>
+          <div class="breakdown-row">
+            <span>Transfer Type</span>
+            <strong>{{ createdTransfer.transferType }}</strong>
+          </div>
+          <div class="breakdown-row">
+            <span>Status</span>
+            <strong>Direct to Wallet</strong>
+          </div>
+        </ng-container>
       </div>
 
       <div class="success-actions">
@@ -74,7 +99,6 @@
       <!-- ── STEP 1: Corridor & Amount ──────────────────────────────────────── -->
       <mat-step [stepControl]="corridorForm" label="Corridor & Amount">
         <form [formGroup]="corridorForm">
-
           <div class="step-content">
 
             <!-- Corridor selector -->
@@ -93,10 +117,11 @@
             <div class="type-selector">
               <label class="type-label">Transfer Type</label>
               <mat-radio-group formControlName="transferType" class="type-group">
-                <mat-card class="type-card"
-                          *ngFor="let t of transferTypes"
-                          [class.selected]="corridorForm.value.transferType === t.value"
-                          (click)="corridorForm.patchValue({ transferType: t.value })">
+                <mat-card
+                  class="type-card"
+                  *ngFor="let t of transferTypes"
+                  [class.selected]="corridorForm.value.transferType === t.value"
+                  (click)="corridorForm.patchValue({ transferType: t.value })">
                   <mat-radio-button [value]="t.value" />
                   <mat-icon>{{ t.icon }}</mat-icon>
                   <span>{{ t.label }}</span>
@@ -112,11 +137,12 @@
                   ({{ selectedCorridor.sourceCurrencyCode }})
                 </ng-container>
               </mat-label>
-              <input matInput
-                     type="number"
-                     formControlName="sentAmount"
-                     min="1"
-                     placeholder="0.00" />
+              <input
+                matInput
+                type="number"
+                formControlName="sentAmount"
+                min="1"
+                placeholder="0.00" />
               <mat-icon matPrefix>attach_money</mat-icon>
               <mat-error>Valid amount required</mat-error>
             </mat-form-field>
@@ -127,7 +153,8 @@
               <span>Calculating fees...</span>
             </div>
 
-            <div class="simulation-result" *ngIf="simulation && !simulating">
+            <!-- Regular simulation for STANDARD/EXPRESS -->
+            <div class="simulation-result" *ngIf="simulation && !simulating && !isMobileMoneySelected()">
               <div class="sim-title">
                 <mat-icon>calculate</mat-icon>
                 Fee Breakdown
@@ -163,17 +190,38 @@
               </div>
             </div>
 
+            <!-- Mobile Money info panel -->
+            <div class="mobile-money-info-panel" *ngIf="isMobileMoneySelected() && corridorForm.get('sentAmount')?.valid">
+              <div class="mm-icon">
+                <mat-icon>phone_android</mat-icon>
+              </div>
+              <div class="mm-content">
+                <h4>Mobile Money Transfer</h4>
+                <p>
+                  <mat-icon>check_circle</mat-icon>
+                  Instant transfer - sent directly to recipient's mobile wallet
+                </p>
+                <p>
+                  <mat-icon>check_circle</mat-icon>
+                  No withdrawal code needed
+                </p>
+                <p>
+                  <mat-icon>check_circle</mat-icon>
+                  Fee details calculated on backend
+                </p>
+              </div>
+            </div>
+
             <div class="sim-error" *ngIf="simulationError">
               <mat-icon>warning</mat-icon>
               {{ simulationError }}
             </div>
-
           </div>
 
           <div class="step-actions">
             <button mat-flat-button color="primary"
                     matStepperNext
-                    [disabled]="corridorForm.invalid || !simulation">
+                    [disabled]="corridorForm.invalid || (!simulation && !isMobileMoneySelected())">
               Continue
               <mat-icon>arrow_forward</mat-icon>
             </button>
@@ -229,13 +277,16 @@
               </mat-form-field>
             </div>
           </div>
+
           <div class="step-actions">
             <button mat-stroked-button matStepperPrevious>
               <mat-icon>arrow_back</mat-icon> Back
             </button>
-            <button mat-flat-button color="primary"
-                    matStepperNext
-                    [disabled]="senderForm.invalid">
+            <button
+              mat-flat-button
+              color="primary"
+              matStepperNext
+              [disabled]="senderForm.invalid">
               Continue <mat-icon>arrow_forward</mat-icon>
             </button>
           </div>
@@ -276,18 +327,55 @@
                 <mat-error>Required</mat-error>
               </mat-form-field>
             </div>
+
+            <!-- ── MOBILE MONEY SPECIFIC FIELDS ──────────────────────────────── -->
+            <ng-container *ngIf="isMobileMoneySelected()">
+              <mat-divider class="mobile-money-divider"></mat-divider>
+
+              <div class="mobile-money-section">
+                <h3 class="section-title">
+                  <mat-icon>phone_android</mat-icon>
+                  Mobile Money Details
+                </h3>
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Mobile Money Operator</mat-label>
+                    <mat-select formControlName="mobileMoneyOperator">
+                      <mat-option *ngFor="let op of mobileMoneyOperators" [value]="op.value">
+                        {{ op.label }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>account_balance_wallet</mat-icon>
+                    <mat-error>Please select operator</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Wallet Phone Number</mat-label>
+                    <input matInput formControlName="mobileMoneyWalletPhone" />
+                    <mat-icon matPrefix>phone_android</mat-icon>
+                    <mat-error>Wallet phone required</mat-error>
+                    <mat-hint>The phone number linked to mobile money account</mat-hint>
+                  </mat-form-field>
+                </div>
+              </div>
+            </ng-container>
+            <!-- ──────────────────────────────────────────────────────────────── -->
+
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Notes (optional)</mat-label>
               <textarea matInput formControlName="notes" rows="2"></textarea>
             </mat-form-field>
           </div>
+
           <div class="step-actions">
             <button mat-stroked-button matStepperPrevious>
               <mat-icon>arrow_back</mat-icon> Back
             </button>
-            <button mat-flat-button color="primary"
-                    matStepperNext
-                    [disabled]="recipientForm.invalid">
+            <button
+              mat-flat-button
+              color="primary"
+              matStepperNext
+              [disabled]="recipientForm.invalid">
               Review <mat-icon>arrow_forward</mat-icon>
             </button>
           </div>
@@ -298,6 +386,7 @@
       <mat-step label="Confirm">
         <div class="step-content">
 
+          <!-- ✅ confirm-grid wraps all three summary sections -->
           <div class="confirm-grid">
 
             <!-- Sender summary -->
@@ -323,6 +412,7 @@
                 <strong>{{ getSenderCountryLabel() }}</strong>
               </div>
             </div>
+            <!-- ✅ /confirm-section Sender -->
 
             <!-- Recipient summary -->
             <div class="confirm-section">
@@ -342,47 +432,89 @@
                 <span>Country</span>
                 <strong>{{ getRecipientCountryLabel() }}</strong>
               </div>
-            </div>
 
-          </div>
+              <!-- ── Mobile Money Info ──────────────────────────── -->
+              <ng-container *ngIf="isMobileMoneySelected()">
+                <mat-divider />
+                <div class="confirm-row">
+                  <span>Mobile Money Operator</span>
+                  <strong>{{ recipientForm.value.mobileMoneyOperator }}</strong>
+                </div>
+                <div class="confirm-row">
+                  <span>Wallet Phone</span>
+                  <strong>{{ recipientForm.value.mobileMoneyWalletPhone }}</strong>
+                </div>
+              </ng-container>
+              <!-- ─────────────────────────────────────────────── -->
 
-          <!-- Transaction summary -->
-          <div class="transaction-summary" *ngIf="simulation">
-            <h3><mat-icon>receipt</mat-icon> Transaction Summary</h3>
-            <div class="confirm-row">
-              <span>Transfer Type</span>
-              <strong>{{ corridorForm.value.transferType }}</strong>
             </div>
-            <div class="confirm-row">
-              <span>Amount Sent</span>
-              <strong>{{ simulation.sentAmount | currencyFormat:simulation.sentCurrency }}</strong>
+            <!-- ✅ /confirm-section Recipient -->
+
+            <!-- Transaction summary -->
+            <div class="transaction-summary" *ngIf="simulation && !isMobileMoneySelected()">
+              <h3><mat-icon>receipt</mat-icon> Transaction Summary</h3>
+              <div class="confirm-row">
+                <span>Transfer Type</span>
+                <strong>{{ corridorForm.value.transferType }}</strong>
+              </div>
+              <div class="confirm-row">
+                <span>Amount Sent</span>
+                <strong>{{ simulation.sentAmount | currencyFormat:simulation.sentCurrency }}</strong>
+              </div>
+              <div class="confirm-row">
+                <span>Fees</span>
+                <strong>{{ simulation.feeAmount | currencyFormat:simulation.sentCurrency }}</strong>
+              </div>
+              <div class="confirm-row">
+                <span>Exchange Rate</span>
+                <strong>1 {{ simulation.sentCurrency }} = {{ simulation.exchangeRate }} {{ simulation.receivedCurrency }}</strong>
+              </div>
+              <div class="confirm-row total">
+                <span>Recipient Receives</span>
+                <strong class="receive-big">
+                  {{ simulation.receivedAmount | currencyFormat:simulation.receivedCurrency }}
+                </strong>
+              </div>
             </div>
-            <div class="confirm-row">
-              <span>Fees</span>
-              <strong>{{ simulation.feeAmount | currencyFormat:simulation.sentCurrency }}</strong>
-            </div>
-            <div class="confirm-row">
-              <span>Exchange Rate</span>
-              <strong>1 {{ simulation.sentCurrency }} = {{ simulation.exchangeRate }} {{ simulation.receivedCurrency }}</strong>
-            </div>
-            <div class="confirm-row total">
-              <span>Recipient Receives</span>
-              <strong class="receive-big">
-                {{ simulation.receivedAmount | currencyFormat:simulation.receivedCurrency }}
-              </strong>
+            <!-- ✅ /transaction-summary -->
+            <div class="transaction-summary mobile-money-summary" *ngIf="isMobileMoneySelected()">
+              <h3><mat-icon>phone_android</mat-icon> Mobile Money Transfer</h3>
+              <div class="confirm-row">
+                <span>Transfer Type</span>
+                <strong>{{ corridorForm.value.transferType }}</strong>
+              </div>
+              <div class="confirm-row">
+                <span>Amount to Send</span>
+                <strong>{{ corridorForm.value.sentAmount }}</strong>
+              </div>
+              <div class="confirm-row">
+                <span>Operator</span>
+                <strong>{{ recipientForm.value.mobileMoneyOperator }}</strong>
+              </div>
+              <div class="confirm-row">
+                <span>Wallet Phone</span>
+                <strong>{{ recipientForm.value.mobileMoneyWalletPhone }}</strong>
+              </div>
+              <div class="mm-notice">
+                <mat-icon>info</mat-icon>
+                <span>Amount will be sent directly to recipient's mobile wallet. Final fees and exchange rate will be calculated by the system.</span>
+              </div>
             </div>
           </div>
+          <!-- ✅ /confirm-grid -->
 
         </div>
+        <!-- ✅ /step-content -->
 
         <div class="step-actions">
           <button mat-stroked-button matStepperPrevious>
             <mat-icon>arrow_back</mat-icon> Back
           </button>
-          <button mat-flat-button
-                  color="primary"
-                  (click)="onSubmit()"
-                  [disabled]="submitting">
+          <button
+            mat-flat-button
+            color="primary"
+            (click)="onSubmit()"
+            [disabled]="submitting">
             <mat-spinner *ngIf="submitting" diameter="20" color="accent" />
             <ng-container *ngIf="!submitting">
               <mat-icon>send</mat-icon>
@@ -390,7 +522,9 @@
             </ng-container>
           </button>
         </div>
+
       </mat-step>
+      <!-- ✅ /mat-step Confirm -->
 
     </mat-stepper>
   </ng-container>

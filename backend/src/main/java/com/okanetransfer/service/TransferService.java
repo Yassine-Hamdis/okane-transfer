@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.okanetransfer.entity.ExchangeRate;
+import java.math.RoundingMode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -48,6 +50,7 @@ public class TransferService {
     @Autowired private CashRegisterBalanceRepository cashRegisterBalanceRepository;
     @Autowired private CashOperationRepository cashOperationRepository;
     @Autowired private CountryRepository countryRepository;
+    @Autowired private ExchangeRateRepository  exchangeRateRepository; // ← ADD THIS
 
     @Autowired private FeeGridService          feeGridService;
     @Autowired private KycService              kycService;
@@ -89,36 +92,54 @@ public class TransferService {
         Country recipientCountry = findCountry(request.getRecipientCountryId());
         Currency sentCurrency = findCurrency(request.getSentCurrencyId());
 
-        // ── 4. Simulate fee — gets rate + fee grid ────
-        FeeSimulationRequest simRequest = new FeeSimulationRequest(
-                corridor.getId(),
-                sentCurrency.getId(),
-                request.getSentAmount(),
-                request.getTransferType() != null
-                        ? request.getTransferType()
-                        : TransferType.STANDARD
-        );
+        // ── 4. Get transfer type ──────────────────────
+        TransferType transferType = request.getTransferType() != null
+                ? request.getTransferType()
+                : TransferType.STANDARD;
 
-        FeeSimulationResponse sim = feeGridService.simulateFee(simRequest);
+        // ── 5. Handle MOBILE_MONEY vs STANDARD/EXPRESS ───
+        FeeSimulationResponse sim;
 
-        // ── 5. Check agency daily limit ───────────────
+        if (transferType == TransferType.MOBILE_MONEY) {
+            // Mobile Money: bypass fee grid, use direct calculation
+            sim = calculateMobileMoneyTransfer(
+                    corridor,
+                    sentCurrency,
+                    request.getSentAmount()
+            );
+        } else {
+            // Standard/Express: use fee grid simulation
+            FeeSimulationRequest simRequest = new FeeSimulationRequest(
+                    corridor.getId(),
+                    sentCurrency.getId(),
+                    request.getSentAmount(),
+                    transferType
+            );
+            sim = feeGridService.simulateFee(simRequest);
+        }
+        // ── 6. Check agency daily limit ───────────────
         checkDailyLimit(sendingAgency, request.getSentAmount());
 
-        // ── 6. Encrypt sender ID ──────────────────────
+        // ── 7. Encrypt sender ID ──────────────────────
         String senderIdEncrypted = null;
         if (request.getSenderIdNumber() != null &&
                 !request.getSenderIdNumber().isBlank()) {
             senderIdEncrypted = aesUtil.encrypt(request.getSenderIdNumber());
         }
 
-        // ── 7. Generate unique withdrawal code ────────
-        String withdrawalCode = codeGenerator.generate().getCode();
-
-        // ── 8. Check admin approval threshold ─────────
+// ── 8. Generate withdrawal code (skip for MOBILE_MONEY) ────
+        String withdrawalCode;
+        if (transferType == TransferType.MOBILE_MONEY) {
+            // Mobile money doesn't need withdrawal code
+            withdrawalCode = null;  // or "DIRECT_TRANSFER"
+        } else {
+            withdrawalCode = codeGenerator.generate().getCode();
+        }
+        // ── 9. Check admin approval threshold ─────────
         boolean requiresApproval =
                 request.getSentAmount().compareTo(APPROVAL_THRESHOLD) >= 0;
 
-        // ── 9. Resolve or auto-create client account ──
+        // ── 10. Resolve or auto-create client account ──
         User client = resolveClientAccount(
                 request.getSenderFirstName(),
                 request.getSenderLastName(),
@@ -126,7 +147,7 @@ public class TransferService {
                 request.getSenderEmail()
         );
 
-        // ── 10. Build & save transfer ─────────────────
+        // ── 11. Build & save transfer ─────────────────
         Transfer transfer = Transfer.builder()
                 .withdrawalCode(withdrawalCode)
                 .senderFirstName(request.getSenderFirstName())
@@ -150,7 +171,7 @@ public class TransferService {
                         .orElseThrow(() -> new ResourceNotFoundException(
                                 "Currency " + sim.getReceivedCurrency())))
                 .exchangeRate(sim.getExchangeRate())
-                .transferType(simRequest.getTransferType())
+                .transferType(transferType)
                 .status(TransferStatus.EN_ATTENTE)
                 .requiresAdminApproval(requiresApproval)
                 .corridor(corridor)
@@ -164,7 +185,7 @@ public class TransferService {
 
         Transfer saved = transferRepository.save(transfer);
 
-        // ── 11. Cash operation — ENVOI ────────────────
+        // ── 12. Cash operation — ENVOI ────────────────
         recordCashOperation(
                 sendingAgency,
                 OperationType.ENVOI,
@@ -174,10 +195,10 @@ public class TransferService {
                 saved
         );
 
-        // ── 12. KYC auto-check ────────────────────────
+        // ── 13. KYC auto-check ────────────────────────
         kycService.autoCheck(saved);
 
-        // ── 13. Notify client ─────────────────────────
+        // ── 14. Notify client ─────────────────────────
         if (client != null) {
             notificationService.notifyTransferCreated(
                     client.getId(),
@@ -190,15 +211,59 @@ public class TransferService {
             );
         }
 
-        // ── 14. Audit ─────────────────────────────────
+        // ── 15. Audit ─────────────────────────────────
         auditService.log(agentId, "TRANSFER_CREATED",
                 "Transfer", saved.getId(),
                 "{\"code\":\"" + withdrawalCode +
-                        "\",\"amount\":" + request.getSentAmount() + "}");
+                        "\",\"amount\":" + request.getSentAmount() +
+                        "\",\"type\":\"" + transferType + "\"}");
 
         return toResponse(saved);
     }
 
+    /**
+     * Calculate Mobile Money transfer without fee grid.
+     * Uses current exchange rate from corridor.
+     * No fees applied for mobile money transfers.
+     */
+    private FeeSimulationResponse calculateMobileMoneyTransfer(
+            Corridor corridor,
+            Currency sentCurrency,
+            BigDecimal sentAmount) {
+
+        // Get current exchange rate
+        ExchangeRate currentRate = exchangeRateRepository
+                .findByCorridorIdAndIsCurrentTrue(corridor.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Current exchange rate not found for corridor: " + corridor.getId()));
+
+        // Mobile Money: zero fees (sent directly to wallet)
+        BigDecimal feeFixed = BigDecimal.ZERO;
+        BigDecimal feePercentage = BigDecimal.ZERO;
+        BigDecimal feeAmount = BigDecimal.ZERO;
+
+        // Full amount goes to recipient (no fees deducted)
+        BigDecimal amountAfterFee = sentAmount;
+        BigDecimal receivedAmount = amountAfterFee
+                .multiply(currentRate.getRate())
+                .setScale(2, RoundingMode.HALF_UP);
+
+        return FeeSimulationResponse.builder()
+                .feeGridId(null)  // No fee grid for mobile money
+                .sentAmount(sentAmount)
+                .sentCurrency(sentCurrency.getCode())
+                .feeFixedAmount(feeFixed)
+                .feePercentage(feePercentage)
+                .feeAmount(feeAmount)
+                .amountAfterFee(amountAfterFee)
+                .exchangeRate(currentRate.getRate())
+                .receivedAmount(receivedAmount)
+                .receivedCurrency(corridor.getDestinationCurrency().getCode())
+                .agencyShare(BigDecimal.ZERO)
+                .centralShare(BigDecimal.ZERO)
+                .transferType(TransferType.MOBILE_MONEY)
+                .build();
+    }
     // ─────────────────────────────────────────────────────
     //  PAYOUT (RETRAIT)
     // ─────────────────────────────────────────────────────

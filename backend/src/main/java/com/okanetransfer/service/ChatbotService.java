@@ -79,6 +79,34 @@ public class ChatbotService {
             "سأقوم بتحويلك إلى وكيل بشري. " +
                     "يرجى الانتظار أو زيارة أقرب وكالة.";
 
+    // ─────────────────────────────────────────────────────
+    //  KEYWORDS — Refined
+    // ─────────────────────────────────────────────────────
+
+    private static final List<String> TRACKING_ACTION_KEYWORDS = List.of(
+            // English
+            "track my", "track the", "where is my", "where is the",
+            "status of my", "status of the", "check my transfer",
+            "my withdrawal", "withdrawal code", "find my transfer",
+            // French
+            "suivre mon", "suivre le", "où est mon", "statut de mon",
+            "mon transfert", "code de retrait",
+            // Arabic
+            "تتبع تحويلي", "أين تحويلي", "حالة تحويلي", "رمز السحب"
+    );
+
+    private static final List<String> FAQ_INDICATOR_KEYWORDS = List.of(
+            // English
+            "what are", "what is", "how do", "how can", "how much",
+            "why", "explain", "tell me about", "difference between",
+            "types of", "list of", "do you", "can you", "who are",
+            // French
+            "quels sont", "qu'est-ce", "comment", "pourquoi",
+            "expliquer", "types de", "différence",
+            // Arabic
+            "ما هي", "ما هو", "كيف", "لماذا", "من أنت", "اشرح"
+    );
+
     @Value("${gpt.api.key:}")
     private String gptApiKey;
 
@@ -144,8 +172,7 @@ public class ChatbotService {
     // ─────────────────────────────────────────────────────
 
     @Transactional
-    public SendMessageResponse sendMessage(SendMessageRequest request,
-                                           Long userId) {
+    public SendMessageResponse sendMessage(SendMessageRequest request, Long userId) {
         ChatbotConversation conversation = conversationRepository
                 .findBySessionId(request.getSessionId())
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -156,21 +183,27 @@ public class ChatbotService {
                     "Conversation is not active. Status: " + conversation.getStatus());
         }
 
-        // ── 1. Save user message ─────────────────────
-        saveMessage(conversation, MessageSender.USER,
-                request.getContent(), null);
+        saveMessage(conversation, MessageSender.USER, request.getContent(), null);
 
-        // ── 2. Detect intent ─────────────────────────
+        // ── Detect intent ─────────────────────────────────────────────────────
         MessageIntent intent = detectIntent(request.getContent());
 
-        // ── 3. Generate bot response ──────────────────
+        // ── If FAQ but last bot message was asking for a withdrawal code ───────
+        if (intent == MessageIntent.FAQ && isWaitingForWithdrawalCode(conversation)) {
+            // User might just be typing their code as a reply
+            String code = extractWithdrawalCode(request.getContent());
+            if (code != null) {
+                log.info("Overriding FAQ intent to TRACKING — user replied with code: {}", code);
+                intent = MessageIntent.TRACKING;
+            }
+        }
+
         String botResponse;
         boolean escalated = false;
 
         switch (intent) {
             case TRACKING -> {
-                botResponse = handleTracking(request.getContent(),
-                        conversation.getLanguage());
+                botResponse = handleTracking(request.getContent(), conversation.getLanguage());
             }
             case ESCALATION -> {
                 botResponse = getEscalationMessage(conversation.getLanguage());
@@ -178,10 +211,7 @@ public class ChatbotService {
                 escalated = true;
             }
             default -> {
-                // FAQ — use GPT with context
-                botResponse = handleFaq(request.getContent(),
-                        conversation.getLanguage());
-                // Re-evaluate: if GPT couldn't answer, escalate
+                botResponse = handleFaq(request.getContent(), conversation.getLanguage());
                 if (shouldEscalate(botResponse)) {
                     intent = MessageIntent.ESCALATION;
                     botResponse = getEscalationMessage(conversation.getLanguage());
@@ -191,7 +221,6 @@ public class ChatbotService {
             }
         }
 
-        // ── 4. Save bot response ──────────────────────
         saveMessage(conversation, MessageSender.BOT, botResponse, intent);
 
         return SendMessageResponse.builder()
@@ -202,6 +231,51 @@ public class ChatbotService {
                 .build();
     }
 
+    /**
+     * Checks if the last bot message was asking the user to provide a withdrawal code.
+     */
+    private boolean isWaitingForWithdrawalCode(ChatbotConversation conversation) {
+        List<ChatbotMessage> messages = messageRepository
+                .findAllByConversationIdOrderBySentAtAsc(conversation.getId());
+
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            ChatbotMessage msg = messages.get(i);
+            if (msg.getSender() == MessageSender.BOT) {
+                String content = msg.getContent().toLowerCase();
+                return content.contains("withdrawal code") ||
+                        content.contains("code de retrait") ||
+                        content.contains("رمز السحب") ||
+                        content.contains("alphanumeric");
+            }
+        }
+        return false;
+    }
+    /**
+     * Checks if the last bot message was asking the user for a withdrawal code.
+     */
+    private boolean isPendingTrackingCode(ChatbotConversation conversation) {
+        List<ChatbotMessage> messages = messageRepository
+                .findAllByConversationIdOrderBySentAtAsc(conversation.getId());
+
+        if (messages.isEmpty()) return false;
+
+        // Get last bot message
+        ChatbotMessage lastBotMessage = null;
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if (messages.get(i).getSender() == MessageSender.BOT) {
+                lastBotMessage = messages.get(i);
+                break;
+            }
+        }
+
+        if (lastBotMessage == null) return false;
+
+        // Check if it was a TRACKING intent asking for the code
+        return lastBotMessage.getIntent() == MessageIntent.TRACKING &&
+                (lastBotMessage.getContent().contains("withdrawal code") ||
+                        lastBotMessage.getContent().contains("code de retrait") ||
+                        lastBotMessage.getContent().contains("رمز السحب"));
+    }
     // ─────────────────────────────────────────────────────
     //  CLOSE CONVERSATION
     // ─────────────────────────────────────────────────────
@@ -249,57 +323,73 @@ public class ChatbotService {
      *  - If GPT fails or says it doesn't know → ESCALATION
      */
     private MessageIntent detectIntent(String message) {
-        String lower = message.toLowerCase();
+        String lower = message.toLowerCase().trim();
         log.info("Detecting intent for message: '{}'", message);
 
-        boolean isTracking = TRACKING_KEYWORDS.stream()
+        // ── Priority 1: Check for withdrawal code pattern FIRST ──────────────
+        String code = extractWithdrawalCode(message);
+        if (code != null) {
+            log.info("Detected intent: TRACKING (withdrawal code '{}' found)", code);
+            return MessageIntent.TRACKING;
+        }
+
+        // ── Priority 2: Check for FAQ indicator keywords ──────────────────────
+        boolean isFaqQuestion = FAQ_INDICATOR_KEYWORDS.stream()
                 .anyMatch(lower::contains);
-        boolean hasWithdrawalCode = message.matches(".*\\b[A-Z0-9]{8}\\b.*");
+        if (isFaqQuestion) {
+            log.info("Detected intent: FAQ (FAQ indicator matched)");
+            return MessageIntent.FAQ;
+        }
 
-        MessageIntent intent = (isTracking || hasWithdrawalCode) ?
-                MessageIntent.TRACKING : MessageIntent.FAQ;
+        // ── Priority 3: Check for explicit tracking action phrases ────────────
+        boolean hasTrackingAction = TRACKING_ACTION_KEYWORDS.stream()
+                .anyMatch(lower::contains);
+        if (hasTrackingAction) {
+            log.info("Detected intent: TRACKING (tracking action phrase matched)");
+            return MessageIntent.TRACKING;
+        }
 
-        log.info("Detected intent: {}", intent);
-        return intent;
+        // ── Priority 4: Default → FAQ ─────────────────────────────────────────
+        log.info("Detected intent: FAQ (default)");
+        return MessageIntent.FAQ;
     }
-
     // ─────────────────────────────────────────────────────
     //  PRIVATE — Transfer Tracking Handler
     // ─────────────────────────────────────────────────────
 
     private String handleTracking(String message, ChatLanguage language) {
-        // Extract 8-char alphanumeric code from message
         String code = extractWithdrawalCode(message);
 
         if (code == null) {
             return switch (language) {
                 case FR -> "Veuillez fournir votre code de retrait " +
-                        "(8 caractères, ex: A3F7K9P2).";
+                        "(8 caractères alphanumériques, ex: A3F7K9P2).";
                 case EN -> "Please provide your withdrawal code " +
-                        "(8 characters, e.g. A3F7K9P2).";
+                        "(8 alphanumeric characters, e.g. A3F7K9P2).";
                 case AR -> "يرجى تقديم رمز السحب الخاص بك " +
-                        "(8 أحرف، مثال: A3F7K9P2).";
+                        "(8 أحرف أبجدية رقمية، مثال: A3F7K9P2).";
             };
         }
 
+        log.info("Looking up transfer with code: '{}'", code);
+
         Optional<Transfer> transferOpt =
-                transferRepository.findByWithdrawalCode(code.toUpperCase());
+                transferRepository.findByWithdrawalCode(code);
 
         if (transferOpt.isEmpty()) {
             return switch (language) {
-                case FR -> "Aucun transfert trouvé avec le code: " + code +
-                        ". Vérifiez le code et réessayez.";
-                case EN -> "No transfer found with code: " + code +
-                        ". Please check the code and try again.";
-                case AR -> "لم يتم العثور على تحويل بالرمز: " + code +
-                        ". يرجى التحقق من الرمز والمحاولة مجدداً.";
+                case FR -> "Aucun transfert trouvé avec le code **" + code +
+                        "**. Vérifiez le code et réessayez.";
+                case EN -> "No transfer found with code **" + code +
+                        "**. Please check the code and try again.";
+                case AR -> "لم يتم العثور على تحويل بالرمز: **" + code +
+                        "**. يرجى التحقق من الرمز والمحاولة مجدداً.";
             };
         }
 
         Transfer transfer = transferOpt.get();
         return buildTrackingResponse(transfer, language);
     }
-
     private String buildTrackingResponse(Transfer transfer, ChatLanguage language) {
         String status = transfer.getStatus().name();
         String recipient = transfer.getRecipientFirstName() + " "
@@ -367,12 +457,33 @@ public class ChatbotService {
     }
 
     private String extractWithdrawalCode(String message) {
-        // Match exactly 8 uppercase alphanumeric characters
+        // Convert to uppercase and search for exactly 8 uppercase alphanumeric chars
+        // surrounded by spaces, start/end of string, or punctuation
         java.util.regex.Pattern pattern =
-                java.util.regex.Pattern.compile("\\b([A-Z0-9]{8})\\b");
-        java.util.regex.Matcher matcher =
-                pattern.matcher(message.toUpperCase());
-        return matcher.find() ? matcher.group(1) : null;
+                java.util.regex.Pattern.compile(
+                        "(?<![A-Z0-9])([A-Z0-9]{8})(?![A-Z0-9])",
+                        java.util.regex.Pattern.CASE_INSENSITIVE
+                );
+        java.util.regex.Matcher matcher = pattern.matcher(message.toUpperCase());
+
+        while (matcher.find()) {
+            String candidate = matcher.group(1);
+            // Make sure it's not a common English word (all letters, common words)
+            if (!isCommonWord(candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private boolean isCommonWord(String word) {
+        // Filter out common 8-letter words that could be falsely matched
+        // Add more as needed
+        List<String> commonWords = List.of(
+                "TRANSFER", "TRACKING", "PASSWORD", "USERNAME",
+                "QUESTION", "PLATFORM", "CUSTOMER", "SERVICES"
+        );
+        return commonWords.contains(word.toUpperCase());
     }
 
     // ─────────────────────────────────────────────────────

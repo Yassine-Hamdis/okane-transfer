@@ -317,3 +317,173 @@
   app-navbar, app-sidebar, .step-actions, .success-actions { display: none !important; }
   .withdrawal-code-box { break-inside: avoid; }
 }
+
+// ── Mobile Money Section ─────────────────────────────────────────────────────
+.mobile-money-divider {
+  margin: 24px 0 16px;
+  border-top-color: var(--okane-border);
+}
+
+.mobile-money-section {
+  margin: 20px 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #e8eaf6 0%, #f5f6fa 100%);
+  border-radius: 12px;
+  border: 1px solid #c5cae9;
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--okane-primary-dk);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: var(--okane-primary);
+    }
+  }
+}
+
+// ── Form Row Layout (for Mobile Money fields) ────────────────────────────────
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  > * { flex: 1; }
+
+  mat-form-field { width: 100%; }
+}
+
+// ── Confirm section divider (for Mobile Money details) ───────────────────────
+.confirm-section mat-divider {
+  margin: 12px 0;
+  border-top-color: var(--okane-border);
+}
+
+// ── Mobile Money Info Panel (Step 1) ─────────────────────────────────────────
+.mobile-money-info-panel {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f7ff 100%);
+  border: 1px solid #90caf9;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 8px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+
+  .mm-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--okane-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    mat-icon {
+      color: #fff;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .mm-content {
+    flex: 1;
+
+    h4 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--okane-primary-dk);
+    }
+
+    p {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+      font-size: 0.875rem;
+      color: var(--okane-text);
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: var(--okane-success);
+      }
+    }
+  }
+}
+
+.mobile-money-summary {
+  background: linear-gradient(135deg, #e3f2fd, #f0f7ff) !important;
+  border-color: #90caf9 !important;
+
+  h3 { color: var(--okane-primary) !important; }
+
+  .mm-notice {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(33, 150, 243, 0.1);
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: var(--okane-text-light);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: var(--okane-primary);
+      flex-shrink: 0;
+    }
+  }
+}
+
+// ── Mobile Money Success Box ──────────────────────────────────────────────────
+.mobile-money-success-box {
+  background: linear-gradient(135deg, #e3f2fd, #f0f7ff);
+  border: 2px solid var(--okane-primary);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  > mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--okane-primary);
+  }
+
+  .mm-success-content {
+    flex: 1;
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--okane-primary-dk);
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--okane-text-light);
+    }
+  }
+}
