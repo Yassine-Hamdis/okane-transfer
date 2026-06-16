@@ -119,3 +119,14 @@ The system implements role-based access control (RBAC) with four main profiles:
    - Intelligent decision support
    - Enhanced user experience
 
+---
+
+## 📞 Support & Team
+
+**Authors:**
+- Y. Hamdis
+- M. Driouche
+- O. Mghira
+- I. Toumi
+
+**Supervisor:** A. Atlas
